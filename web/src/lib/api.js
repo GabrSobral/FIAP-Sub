@@ -1,0 +1,141 @@
+// Both APIs are reached through same-origin prefixes that a proxy rewrites: Vite's dev server
+// during `npm run dev`, nginx inside the container. Nothing here is cross-origin, so no preflight
+// is issued and neither service needs CORS turned on.
+const CORE = import.meta.env.VITE_CORE_API ?? '/core-api';
+const SALES = import.meta.env.VITE_SALES_API ?? '/sales-api';
+
+/** A non-2xx answer, carrying the ProblemDetails body the services return. */
+export class ApiError extends Error {
+  constructor(status, problem, fallbackMessage) {
+    super(problem?.detail || problem?.title || fallbackMessage);
+    this.name = 'ApiError';
+    this.status = status;
+    this.problem = problem;
+  }
+
+  /** Stable machine-readable code, e.g. `vehicle.not_available`. */
+  get code() {
+    return this.problem?.code ?? null;
+  }
+
+  /** Per-field messages, present when the failure came from request validation. */
+  get fieldErrors() {
+    return this.problem?.errors ?? null;
+  }
+}
+
+/** The network never answered — a different problem from "the service said no". */
+export class NetworkError extends Error {
+  constructor(cause) {
+    super('Não foi possível falar com o serviço.');
+    this.name = 'NetworkError';
+    this.cause = cause;
+  }
+}
+
+function parse(text) {
+  if (!text) return null;
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { detail: text };
+  }
+}
+
+async function request(base, path, { method = 'GET', body, signal } = {}) {
+  const hasBody = body !== undefined;
+  let response;
+
+  try {
+    response = await fetch(base + path, {
+      method,
+      headers: hasBody ? { 'Content-Type': 'application/json' } : undefined,
+      body: hasBody ? JSON.stringify(body) : undefined,
+      signal,
+    });
+  } catch (cause) {
+    if (cause.name === 'AbortError') throw cause;
+    throw new NetworkError(cause);
+  }
+
+  if (response.status === 204) return null;
+
+  const payload = parse(await response.text());
+
+  if (!response.ok) {
+    throw new ApiError(response.status, payload, `HTTP ${response.status}`);
+  }
+
+  return payload;
+}
+
+const query = (params) => {
+  const search = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null && value !== '') search.set(key, value);
+  }
+
+  const text = search.toString();
+
+  return text ? `?${text}` : '';
+};
+
+/** Vehicle catalogue and the payment webhook. */
+export const core = {
+  ready: (signal) => request(CORE, '/health/ready', { signal }),
+
+  registerVehicle: (vehicle, signal) =>
+    request(CORE, '/api/vehicles', { method: 'POST', body: vehicle, signal }),
+
+  updateVehicle: (id, vehicle, signal) =>
+    request(CORE, `/api/vehicles/${id}`, { method: 'PUT', body: vehicle, signal }),
+
+  getVehicle: (id, signal) => request(CORE, `/api/vehicles/${id}`, { signal }),
+
+  listVehicles: ({ status, page = 1, pageSize = 50 } = {}, signal) =>
+    request(CORE, `/api/vehicles${query({ status, page, pageSize })}`, { signal }),
+
+  /**
+   * Stands in for the payment provider. It is the real webhook, called with the payment code the
+   * sales service handed out when the purchase was opened.
+   */
+  notifyPayment: ({ paymentCode, status }, signal) =>
+    request(CORE, '/api/webhooks/payments', { method: 'POST', body: { paymentCode, status }, signal }),
+};
+
+/** Public listings and purchases. */
+export const sales = {
+  ready: (signal) => request(SALES, '/health/ready', { signal }),
+
+  listForSale: ({ page = 1, pageSize = 50 } = {}, signal) =>
+    request(SALES, `/api/vehicles/for-sale${query({ page, pageSize })}`, { signal }),
+
+  listSold: ({ page = 1, pageSize = 50 } = {}, signal) =>
+    request(SALES, `/api/vehicles/sold${query({ page, pageSize })}`, { signal }),
+
+  openSale: ({ vehicleId, cpf, saleDate }, signal) =>
+    request(SALES, '/api/sales', { method: 'POST', body: { vehicleId, cpf, saleDate }, signal }),
+
+  getSale: (id, signal) => request(SALES, `/api/sales/${id}`, { signal }),
+};
+
+/** Turns any thrown error into a sentence worth showing a person. */
+export function describe(error) {
+  if (error instanceof ApiError) {
+    const fields = error.fieldErrors;
+
+    if (fields) {
+      return Object.entries(fields)
+        .map(([field, messages]) => `${field}: ${messages.join(' ')}`)
+        .join(' · ');
+    }
+
+    return error.message;
+  }
+
+  if (error instanceof NetworkError) return error.message;
+
+  return error?.message ?? 'Erro inesperado.';
+}

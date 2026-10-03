@@ -8,6 +8,7 @@ conversam exclusivamente por **HTTP**.
 |---|---|---|---|---|
 | **core** | [`core/`](core) | `8080` | `core-db` (`fiapsub_core`) | Catálogo de veículos (cadastro, edição) e recebimento do **webhook de pagamento** |
 | **sales** | [`sales/`](sales) | `8081` | `sales-db` (`fiapsub_sales`) | **Listagens públicas** ordenadas por preço e **efetivação da compra** |
+| **web** | [`web/`](web) | `3000` | — | Interface que consome os dois serviços (extra, não exigido pelo enunciado) |
 
 O enunciado exige que *"os endpoints de listagem e compras de veículos estejam isolados em um
 serviço único, rodando com um banco de dados isolado"*, para suportar aumento repentino de
@@ -26,8 +27,15 @@ docker compose up --build        # sobe core-db, core-api, sales-db e sales-api
 ./scripts/e2e.sh                 # exercita a solução ponta a ponta
 ```
 
+- **Interface web: <http://localhost:3000>**
 - Swagger do core: <http://localhost:8080/swagger>
 - Swagger do sales: <http://localhost:8081/swagger>
+
+A interface em [`web/`](web) é um extra — o enunciado entrega a API para o time de frontend
+integrar depois. Ela existe para demonstrar o fluxo completo no navegador: cadastrar, listar por
+preço, comprar e confirmar o pagamento. É Svelte com **JavaScript e CSS escritos à mão**, sem
+framework de CSS, e as APIs são alcançadas por prefixos do mesmo origin (`/core-api`,
+`/sales-api`) reescritos por um proxy — logo **nenhum dos serviços precisa de CORS**.
 
 O `scripts/e2e.sh` é o roteiro do vídeo de demonstração: ele cadastra veículos, lista por preço,
 compra, dispara o webhook de pagamento, confere a venda efetivada e também os caminhos negativos
@@ -357,11 +365,12 @@ Depois do split, em cada repositório: mova `.github/workflows/<serviço>.yml` p
 ├── .github/workflows/          CI/CD de cada serviço
 ├── docs/                       enunciado (PDF) e specs
 ├── core/                       → repositório 1
-└── sales/                      → repositório 2
+├── sales/                      → repositório 2
+└── web/                        interface (extra, Svelte + JS + CSS à mão)
 ```
 
 ## Stack
 
 .NET 10 · ASP.NET Core · EF Core 10 + Npgsql · PostgreSQL 17 · FluentValidation ·
 `Microsoft.Extensions.Http.Resilience` · Swashbuckle · xUnit v3 + Shouldly + NSubstitute +
-Testcontainers · Docker · Kubernetes · GitHub Actions
+Testcontainers · Docker · Kubernetes · GitHub Actions · Svelte 5 + Vite + nginx (interface)

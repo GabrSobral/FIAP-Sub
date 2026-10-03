@@ -89,6 +89,21 @@ services:
       retries: 20
       start_period: 20s
 
+  # ----- interface web -----
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    ports:
+      - "3000:8080"
+    # nginx proxies both APIs under the same origin, so the browser never issues a cross-origin
+    # request and neither service needs CORS. It only needs the upstreams to resolve by name.
+    depends_on:
+      core-api:
+        condition: service_started
+      sales-api:
+        condition: service_started
+
 volumes:
   core-db-data:
   sales-db-data:

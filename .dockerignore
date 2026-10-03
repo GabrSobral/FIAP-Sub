@@ -4,6 +4,8 @@
 # a path containing a backslash (MSB3552), so keep it out of the build context.
 **/*\\*
 **/TestResults/
+**/node_modules/
+web/dist/
 **/.vs/
 **/.vscode/
 **/.idea/

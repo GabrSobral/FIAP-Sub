@@ -1,0 +1,17 @@
+{
+  "name": "fiapsub-web",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Interface da plataforma de revenda de veículos — Svelte, JavaScript e CSS escritos à mão.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --host --port 4173"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^7.3.1",
+    "svelte": "^5.57.1",
+    "vite": "^8.3.2"
+  }
+}
