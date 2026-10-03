@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Domain is the innermost layer: it references no other project and no third-party package. -->
+
+</Project>

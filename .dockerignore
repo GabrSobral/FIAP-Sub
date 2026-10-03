@@ -1,0 +1,15 @@
+**/bin/
+**/obj/
+# `dotnet ef` can leave a literal `bin\Debug` directory on Linux; MSBuild's glob walker fails on
+# a path containing a backslash (MSB3552), so keep it out of the build context.
+**/*\\*
+**/TestResults/
+**/.vs/
+**/.vscode/
+**/.idea/
+.git/
+.github/
+docs/
+coveragereport/
+*.md
+.env

@@ -1,0 +1,25 @@
+# Only the public routes are exposed. The /api/internal routes are reachable only inside the
+# cluster, through the ClusterIP service, and are additionally guarded by the shared token.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sales-api
+  namespace: fiap-sub
+  labels:
+    app.kubernetes.io/name: sales-api
+    app.kubernetes.io/part-of: fiap-sub
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: sales.fiap-sub.local
+      http:
+        paths:
+          - path: /(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: sales-api
+                port:
+                  name: http

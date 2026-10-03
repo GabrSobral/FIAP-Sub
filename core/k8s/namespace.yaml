@@ -1,0 +1,8 @@
+# Both services declare the namespace so either repository can be deployed on its own.
+# `kubectl apply` is idempotent, so applying it twice is harmless.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: fiap-sub
+  labels:
+    app.kubernetes.io/part-of: fiap-sub

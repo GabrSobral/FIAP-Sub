@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/FiapSub.Sales.Api/FiapSub.Sales.Api.csproj" />
+    <Project Path="src/FiapSub.Sales.Application/FiapSub.Sales.Application.csproj" />
+    <Project Path="src/FiapSub.Sales.Domain/FiapSub.Sales.Domain.csproj" />
+    <Project Path="src/FiapSub.Sales.Infrastructure.Database/FiapSub.Sales.Infrastructure.Database.csproj" />
+    <Project Path="src/FiapSub.Sales.Infrastructure.Http/FiapSub.Sales.Infrastructure.Http.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/FiapSub.Sales.Api.IntegrationTests/FiapSub.Sales.Api.IntegrationTests.csproj" />
+    <Project Path="tests/FiapSub.Sales.Application.Tests/FiapSub.Sales.Application.Tests.csproj" />
+    <Project Path="tests/FiapSub.Sales.Domain.Tests/FiapSub.Sales.Domain.Tests.csproj" />
+    <Project Path="tests/FiapSub.Sales.Infrastructure.Tests/FiapSub.Sales.Infrastructure.Tests.csproj" />
+  </Folder>
+</Solution>

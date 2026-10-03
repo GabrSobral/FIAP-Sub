@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <UserSecretsId>fiapsub-core-api</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FiapSub.Core.Application\FiapSub.Core.Application.csproj" />
+    <ProjectReference Include="..\FiapSub.Core.Infrastructure.Database\FiapSub.Core.Infrastructure.Database.csproj" />
+    <ProjectReference Include="..\FiapSub.Core.Infrastructure.Http\FiapSub.Core.Infrastructure.Http.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="FiapSub.Core.Api.IntegrationTests" />
+  </ItemGroup>
+
+</Project>

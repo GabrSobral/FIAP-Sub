@@ -1,0 +1,7 @@
+- Usar Clean Architecture e em camadas;
+- Camadas de Domain, Application, Infrastructure.<o que for preciso aqui>.
+- Usar docker e docker-compose para subir os serviços necessários para rodar localmente.
+- Testes unitarios conforme o .pdf pede.
+- Criar as camadas em forma de bibliotecas c#, para modularidade
+- Para o padrao de nomes das camadas, use <nome do projeto>.<camada>.<subcamada>, por exemplo: MeuProjeto.Application, ou MeuProjeto.Infrastructure.Database.
+- Use DDD e principios disso para montar o dominio do negocio.

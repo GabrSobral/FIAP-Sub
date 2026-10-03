@@ -1,0 +1,94 @@
+# Full local stack: two services, two databases, nothing shared between them.
+#   docker compose up --build
+#   ./scripts/e2e.sh
+name: fiap-sub
+
+x-postgres-env: &postgres-env
+  POSTGRES_USER: ${POSTGRES_USER:-fiapsub}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fiapsub}
+
+services:
+  # ----- core service: vehicle catalogue + payment webhook -----
+  core-db:
+    image: postgres:17-alpine
+    environment:
+      <<: *postgres-env
+      POSTGRES_DB: fiapsub_core
+    ports:
+      # Exposed on the host so the README's psql commands can prove the databases are separate.
+      - "5432:5432"
+    volumes:
+      - core-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready --username=${POSTGRES_USER:-fiapsub} --dbname=fiapsub_core"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  core-api:
+    build:
+      context: .
+      dockerfile: core/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Database__ConnectionString: "Host=core-db;Port=5432;Database=fiapsub_core;Username=${POSTGRES_USER:-fiapsub};Password=${POSTGRES_PASSWORD:-fiapsub}"
+      Database__RunMigrationsOnStartup: "true"
+      SalesService__BaseUrl: "http://sales-api:8080"
+      SalesService__InternalToken: ${INTERNAL_TOKEN:-local-dev-internal-token}
+      InternalApi__Token: ${INTERNAL_TOKEN:-local-dev-internal-token}
+    ports:
+      - "8080:8080"
+    depends_on:
+      core-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/health/ready"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  # ----- sales service: public listings + purchases -----
+  sales-db:
+    image: postgres:17-alpine
+    environment:
+      <<: *postgres-env
+      POSTGRES_DB: fiapsub_sales
+    ports:
+      - "5433:5432"
+    volumes:
+      - sales-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready --username=${POSTGRES_USER:-fiapsub} --dbname=fiapsub_sales"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  sales-api:
+    build:
+      context: .
+      dockerfile: sales/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Database__ConnectionString: "Host=sales-db;Port=5432;Database=fiapsub_sales;Username=${POSTGRES_USER:-fiapsub};Password=${POSTGRES_PASSWORD:-fiapsub}"
+      Database__RunMigrationsOnStartup: "true"
+      CatalogueService__BaseUrl: "http://core-api:8080"
+      CatalogueService__InternalToken: ${INTERNAL_TOKEN:-local-dev-internal-token}
+      InternalApi__Token: ${INTERNAL_TOKEN:-local-dev-internal-token}
+    ports:
+      - "8081:8080"
+    depends_on:
+      sales-db:
+        condition: service_healthy
+    # Deliberately not depends_on core-api: the two services call each other, so a startup
+    # dependency either way would be a cycle. Retries plus the catalogue-sync endpoint cover it.
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/health/ready"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+volumes:
+  core-db-data:
+  sales-db-data:

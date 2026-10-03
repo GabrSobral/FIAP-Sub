@@ -1,0 +1,19 @@
+# Non-secret settings. Double underscores are how ASP.NET Core reads nested configuration
+# ("Database__RunMigrationsOnStartup" binds to Database:RunMigrationsOnStartup).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: core-api-config
+  namespace: fiap-sub
+  labels:
+    app.kubernetes.io/name: core-api
+    app.kubernetes.io/part-of: fiap-sub
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  ASPNETCORE_HTTP_PORTS: "8080"
+  Database__RunMigrationsOnStartup: "true"
+  Database__MaxRetryCount: "8"
+  SalesService__BaseUrl: "http://sales-api.fiap-sub.svc.cluster.local:8080"
+  SalesService__AttemptTimeoutSeconds: "5"
+  SalesService__RetryCount: "3"
+  InternalApi__PathPrefix: "/api/internal"
