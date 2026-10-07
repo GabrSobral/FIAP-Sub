@@ -73,16 +73,21 @@ dotnet test --solution sales/FiapSub.Sales.slnx
 Com relatório de cobertura (o mesmo caminho que o CI executa):
 
 ```bash
-dotnet test --solution core/FiapSub.Core.slnx \
+cd core        # ou: cd sales
+
+dotnet test --solution FiapSub.Core.slnx \
   --coverage --coverage-settings coverage.runsettings \
   --coverage-output-format cobertura --coverage-output coverage.cobertura.xml
 
 dotnet tool install --global dotnet-reportgenerator-globaltool
-reportgenerator -reports:"core/tests/**/TestResults/coverage.cobertura.xml" \
+reportgenerator -reports:"tests/**/TestResults/coverage.cobertura.xml" \
   -targetdir:coveragereport -reporttypes:"Html;TextSummary"
 
 cat coveragereport/Summary.txt
 ```
+
+Cada serviço carrega o próprio `global.json` e `coverage.runsettings`, então esses comandos são os
+mesmos aqui e no repositório isolado — é a mesma linha que o CI executa.
 
 Os testes de integração sobem um PostgreSQL de verdade via **Testcontainers** e aplicam as
 migrations do EF Core — ou seja, as migrations versionadas também estão sob teste. É preciso ter o
@@ -336,7 +341,9 @@ idempotência do webhook.
 ## Entrega: transformar em dois repositórios
 
 O enunciado pede **dois repositórios**. Este monorepo foi a escolha para desenvolver, e cada pasta
-já é autossuficiente (solution, `Dockerfile`, `k8s/`, `README.md` próprios). Para publicar:
+é um repositório completo por construção: traz a própria solution, `global.json`,
+`coverage.runsettings`, `Directory.*.props`, `Dockerfile` (com contexto na própria pasta), `k8s/`,
+`README.md`, `.gitignore` e `.dockerignore`.
 
 ```bash
 # repositório 1 — serviço de venda de veículos
@@ -348,9 +355,28 @@ git subtree split --prefix=core -b core-only
 git push git@github.com:<usuario>/fiap-sub-core.git core-only:main
 ```
 
-Depois do split, em cada repositório: mova `.github/workflows/<serviço>.yml` para
-`.github/workflows/`, leve `global.json` e `coverage.runsettings` para a raiz, e ajuste o
-`Dockerfile` para contexto na raiz do repositório (as linhas `COPY` perdem o prefixo da pasta).
+> `git subtree` é um comando contrib e não vem em toda distribuição (no Fedora, por exemplo, está
+> no pacote `git-subtree`). Sem ele, o equivalente é:
+> ```bash
+> git filter-branch --subdirectory-filter sales -- --all
+> ```
+> em um clone descartável, ou simplesmente copiar a pasta para um repositório novo — o histórico
+> por si só não é entregável.
+
+**A única edição necessária depois do split**, em cada repositório:
+
+```bash
+mkdir -p .github/workflows
+git mv ../.github/workflows/sales.yml .github/workflows/ci-cd.yml   # ou core.yml
+sed -i 's/^  SERVICE_DIR: sales$/  SERVICE_DIR: ./' .github/workflows/ci-cd.yml
+```
+
+Todos os outros caminhos do pipeline derivam de `SERVICE_DIR`, e os workflows não usam filtro
+`paths:` justamente para não deixarem de disparar depois dessa mudança.
+
+Isso foi verificado, não presumido: em cada repositório simulado a partir do split,
+`dotnet build -warnaserror`, `dotnet test` com cobertura, o gate de 80% e `docker build .`
+rodaram na raiz sem nenhum outro ajuste — 172 testes a 99,8% no `core` e 197 a 100% no `sales`.
 
 ---
 
@@ -360,7 +386,6 @@ Depois do split, em cada repositório: mova `.github/workflows/<serviço>.yml` p
 .
 ├── docker-compose.yml          stack local completa (4 containers)
 ├── global.json                 SDK fixado + runner de testes (Microsoft.Testing.Platform)
-├── coverage.runsettings        exclusões de cobertura (migrations e código gerado)
 ├── scripts/e2e.sh              roteiro ponta a ponta / do vídeo
 ├── .github/workflows/          CI/CD de cada serviço
 ├── docs/                       enunciado (PDF) e specs

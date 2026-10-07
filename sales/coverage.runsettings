@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="Code Coverage">
+        <Configuration>
+          <CodeCoverage>
+            <ModulePaths>
+              <Exclude>
+                <!-- Test assemblies themselves are not product code. -->
+                <ModulePath>.*\.Tests\.dll$</ModulePath>
+                <ModulePath>.*\.IntegrationTests\.dll$</ModulePath>
+              </Exclude>
+            </ModulePaths>
+            <Sources>
+              <Exclude>
+                <!-- EF Core scaffolds these; they are asserted by the integration tests instead. -->
+                <Source>.*[\\/]Migrations[\\/].*</Source>
+                <!-- Source-generator output lives under obj/; nobody wrote it and nobody can test it. -->
+                <Source>.*[\\/]obj[\\/].*</Source>
+              </Exclude>
+            </Sources>
+            <Attributes>
+              <Exclude>
+                <Attribute>^System\.Diagnostics\.CodeAnalysis\.ExcludeFromCodeCoverageAttribute$</Attribute>
+                <Attribute>^System\.Runtime\.CompilerServices\.CompilerGeneratedAttribute$</Attribute>
+              </Exclude>
+            </Attributes>
+            <UseVerifiableInstrumentation>False</UseVerifiableInstrumentation>
+            <CollectFromChildProcesses>True</CollectFromChildProcesses>
+          </CodeCoverage>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

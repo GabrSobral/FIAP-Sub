@@ -4,27 +4,23 @@
 #
 # Deployment is therefore driven by pull requests: nothing reaches the cluster until a PR is
 # merged into main.
+#
+# Every path below is derived from SERVICE_DIR, so delivering this service as its own repository
+# needs exactly one edit here: set SERVICE_DIR to "." (see the split section of the root README).
+# There is deliberately no `paths:` filter — one would silently stop matching after that move,
+# and a workflow that never fires looks the same as no CI at all.
 name: sales — listings and purchases
 
 on:
   pull_request:
     branches: [main]
-    paths:
-      - "sales/**"
-      - ".github/workflows/sales.yml"
-      - "global.json"
-      - "coverage.runsettings"
   push:
     branches: [main]
-    paths:
-      - "sales/**"
-      - ".github/workflows/sales.yml"
-      - "global.json"
-      - "coverage.runsettings"
   workflow_dispatch:
 
 env:
-  SOLUTION: sales/FiapSub.Sales.slnx
+  SERVICE_DIR: sales
+  SOLUTION_NAME: FiapSub.Sales.slnx
   MIN_LINE_COVERAGE: "80"
   IMAGE_NAME: fiapsub-sales
 
@@ -36,32 +32,35 @@ jobs:
   build-and-test:
     name: Build and test
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.SERVICE_DIR }}
     steps:
       - uses: actions/checkout@v5
 
       - name: Set up .NET
         uses: actions/setup-dotnet@v5
         with:
-          global-json-file: global.json
+          global-json-file: ${{ env.SERVICE_DIR }}/global.json
 
       - name: Cache NuGet packages
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('sales/Directory.Packages.props') }}
+          key: nuget-${{ runner.os }}-${{ hashFiles(format('{0}/Directory.Packages.props', env.SERVICE_DIR)) }}
           restore-keys: nuget-${{ runner.os }}-
 
       - name: Restore
-        run: dotnet restore $SOLUTION
+        run: dotnet restore "$SOLUTION_NAME"
 
       - name: Build
-        run: dotnet build $SOLUTION --configuration Release --no-restore -warnaserror
+        run: dotnet build "$SOLUTION_NAME" --configuration Release --no-restore -warnaserror
 
       # The integration tests start a throwaway Postgres with Testcontainers; the ubuntu runner
       # already has a Docker daemon, so no extra service container is needed.
       - name: Test with coverage
         run: |
-          dotnet test --solution $SOLUTION \
+          dotnet test --solution "$SOLUTION_NAME" \
             --configuration Release --no-build \
             --coverage --coverage-settings coverage.runsettings \
             --coverage-output-format cobertura \
@@ -71,7 +70,7 @@ jobs:
         run: |
           dotnet tool install --global dotnet-reportgenerator-globaltool
           reportgenerator \
-            -reports:"sales/tests/**/TestResults/coverage.cobertura.xml" \
+            -reports:"tests/**/TestResults/coverage.cobertura.xml" \
             -targetdir:coveragereport \
             -reporttypes:"Html;Cobertura;TextSummary;MarkdownSummaryGithub"
 
@@ -102,7 +101,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: sales-coverage-report
-          path: coveragereport/
+          path: ${{ env.SERVICE_DIR }}/coveragereport/
           retention-days: 30
 
   deploy:
@@ -138,8 +137,9 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: .
-          file: sales/Dockerfile
+          # The Dockerfile takes the service folder as its context, so this is the only
+          # reference that has to know where the service lives.
+          context: ${{ env.SERVICE_DIR }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -161,14 +161,15 @@ jobs:
 
       - name: Roll out the deployment and service
         if: steps.cluster.outputs.configured == 'true'
+        working-directory: ${{ env.SERVICE_DIR }}
         run: |
-          kubectl apply -f sales/k8s/namespace.yaml
-          kubectl apply -f sales/k8s/configmap.yaml
-          kubectl apply -f sales/k8s/postgres.yaml
-          kubectl apply -f sales/k8s/service.yaml
-          kubectl apply -f sales/k8s/deployment.yaml
-          kubectl apply -f sales/k8s/hpa.yaml
-          kubectl apply -f sales/k8s/ingress.yaml
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/configmap.yaml
+          kubectl apply -f k8s/postgres.yaml
+          kubectl apply -f k8s/service.yaml
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/hpa.yaml
+          kubectl apply -f k8s/ingress.yaml
 
           # Point the deployment at the image this run just pushed.
           kubectl --namespace fiap-sub set image deployment/sales-api \
@@ -183,5 +184,5 @@ jobs:
             echo "### Rollout skipped"
             echo
             echo "The image was published to GHCR, but no \`KUBE_CONFIG\` secret is configured,"
-            echo "so \`kubectl apply -f sales/k8s/\` did not run."
+            echo "so \`kubectl apply -f k8s/\` did not run."
           } >> "$GITHUB_STEP_SUMMARY"

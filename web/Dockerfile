@@ -1,19 +1,19 @@
-# Build context is the repository root, to match the other two services:
-#   docker build -f web/Dockerfile .
+# The build context is this folder, matching the other two services:
+#   docker build -t fiapsub-web .
 FROM node:24-alpine AS build
 WORKDIR /app
 
 # Install from the lockfile first, so editing source does not invalidate the install layer.
-COPY web/package.json web/package-lock.json ./
+COPY package.json package-lock.json ./
 RUN npm ci
 
-COPY web/vite.config.js web/svelte.config.js web/index.html ./
-COPY web/src/ src/
+COPY vite.config.js svelte.config.js index.html ./
+COPY src/ src/
 RUN npm run build
 
 FROM nginx:1.29-alpine AS runtime
 
-COPY web/nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
 
 EXPOSE 8080

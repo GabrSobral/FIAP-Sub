@@ -1,0 +1,23 @@
+# .NET build output
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+*.user
+artifacts/
+
+# `dotnet ef` builds the startup project into a Windows-style path, which on Linux becomes a
+# directory whose name literally contains a backslash. MSBuild's glob walker then fails with
+# MSB3552, so these must never be committed or copied into a build context.
+*\\*
+
+# Test / coverage output
+TestResults/
+coveragereport/
+*.cobertura.xml
+
+# IDE / OS
+.vs/
+.vscode/
+.idea/
+.DS_Store

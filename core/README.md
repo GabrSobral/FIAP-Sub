@@ -130,7 +130,7 @@ Com cobertura, do mesmo jeito que o CI:
 
 ```bash
 dotnet test --solution FiapSub.Core.slnx \
-  --coverage --coverage-settings ../coverage.runsettings \
+  --coverage --coverage-settings coverage.runsettings \
   --coverage-output-format cobertura --coverage-output coverage.cobertura.xml
 
 dotnet tool install --global dotnet-reportgenerator-globaltool
@@ -176,6 +176,18 @@ dotnet test --solution FiapSub.Core.slnx --filter-not-trait "Category=Integratio
 
 `InternalApi:Token` e o `CatalogueService:InternalToken` do serviço de vendas devem ter o **mesmo
 valor** — é o segredo compartilhado entre os dois.
+
+## Este diretório é um repositório completo
+
+Tudo o que o serviço precisa está aqui: `global.json` (que fixa o SDK e liga o runner de testes),
+`coverage.runsettings`, `Directory.Build.props`, `Directory.Packages.props`, `Dockerfile`, `k8s/`,
+`.gitignore` e `.dockerignore`. Depois do `git subtree split` descrito no README da raiz, este
+diretório vira a raiz do repositório e `dotnet build`, `dotnet test` e `docker build .` funcionam
+sem nenhum ajuste — isso é verificado, não presumido.
+
+A única edição necessária é no workflow: mova `.github/workflows/core.yml` para
+`.github/workflows/ci-cd.yml` e troque `SERVICE_DIR: core` por `SERVICE_DIR: .`. Todos os demais
+caminhos do pipeline derivam dessa variável.
 
 ## CI/CD
 

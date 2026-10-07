@@ -1,21 +1,22 @@
-# Build context is the repository root, so global.json (which pins the SDK and the test runner)
-# is available: docker build -f core/Dockerfile .
+# The build context is this service's own folder, so the image builds the same way whether this
+# repository is the monorepo or the standalone service repository:
+#   docker build -t fiapsub-core .      (from core/)
+#   docker compose build core-api       (compose points the context at ./core)
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Restore using only the files that can change the restore graph, so editing code does not
 # invalidate the (slow) restore layer.
-COPY global.json ./
-COPY core/Directory.Build.props core/Directory.Packages.props core/
-COPY core/src/FiapSub.Core.Domain/FiapSub.Core.Domain.csproj core/src/FiapSub.Core.Domain/
-COPY core/src/FiapSub.Core.Application/FiapSub.Core.Application.csproj core/src/FiapSub.Core.Application/
-COPY core/src/FiapSub.Core.Infrastructure.Database/FiapSub.Core.Infrastructure.Database.csproj core/src/FiapSub.Core.Infrastructure.Database/
-COPY core/src/FiapSub.Core.Infrastructure.Http/FiapSub.Core.Infrastructure.Http.csproj core/src/FiapSub.Core.Infrastructure.Http/
-COPY core/src/FiapSub.Core.Api/FiapSub.Core.Api.csproj core/src/FiapSub.Core.Api/
-RUN dotnet restore core/src/FiapSub.Core.Api/FiapSub.Core.Api.csproj
+COPY global.json Directory.Build.props Directory.Packages.props ./
+COPY src/FiapSub.Core.Domain/FiapSub.Core.Domain.csproj src/FiapSub.Core.Domain/
+COPY src/FiapSub.Core.Application/FiapSub.Core.Application.csproj src/FiapSub.Core.Application/
+COPY src/FiapSub.Core.Infrastructure.Database/FiapSub.Core.Infrastructure.Database.csproj src/FiapSub.Core.Infrastructure.Database/
+COPY src/FiapSub.Core.Infrastructure.Http/FiapSub.Core.Infrastructure.Http.csproj src/FiapSub.Core.Infrastructure.Http/
+COPY src/FiapSub.Core.Api/FiapSub.Core.Api.csproj src/FiapSub.Core.Api/
+RUN dotnet restore src/FiapSub.Core.Api/FiapSub.Core.Api.csproj
 
-COPY core/src/ core/src/
-RUN dotnet publish core/src/FiapSub.Core.Api/FiapSub.Core.Api.csproj \
+COPY src/ src/
+RUN dotnet publish src/FiapSub.Core.Api/FiapSub.Core.Api.csproj \
         --configuration Release --no-restore --output /app
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime

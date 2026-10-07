@@ -1,21 +1,22 @@
-# Build context is the repository root, so global.json (which pins the SDK and the test runner)
-# is available: docker build -f sales/Dockerfile .
+# The build context is this service's own folder, so the image builds the same way whether this
+# repository is the monorepo or the standalone service repository:
+#   docker build -t fiapsub-sales .      (from sales/)
+#   docker compose build sales-api       (compose points the context at ./sales)
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Restore using only the files that can change the restore graph, so editing code does not
 # invalidate the (slow) restore layer.
-COPY global.json ./
-COPY sales/Directory.Build.props sales/Directory.Packages.props sales/
-COPY sales/src/FiapSub.Sales.Domain/FiapSub.Sales.Domain.csproj sales/src/FiapSub.Sales.Domain/
-COPY sales/src/FiapSub.Sales.Application/FiapSub.Sales.Application.csproj sales/src/FiapSub.Sales.Application/
-COPY sales/src/FiapSub.Sales.Infrastructure.Database/FiapSub.Sales.Infrastructure.Database.csproj sales/src/FiapSub.Sales.Infrastructure.Database/
-COPY sales/src/FiapSub.Sales.Infrastructure.Http/FiapSub.Sales.Infrastructure.Http.csproj sales/src/FiapSub.Sales.Infrastructure.Http/
-COPY sales/src/FiapSub.Sales.Api/FiapSub.Sales.Api.csproj sales/src/FiapSub.Sales.Api/
-RUN dotnet restore sales/src/FiapSub.Sales.Api/FiapSub.Sales.Api.csproj
+COPY global.json Directory.Build.props Directory.Packages.props ./
+COPY src/FiapSub.Sales.Domain/FiapSub.Sales.Domain.csproj src/FiapSub.Sales.Domain/
+COPY src/FiapSub.Sales.Application/FiapSub.Sales.Application.csproj src/FiapSub.Sales.Application/
+COPY src/FiapSub.Sales.Infrastructure.Database/FiapSub.Sales.Infrastructure.Database.csproj src/FiapSub.Sales.Infrastructure.Database/
+COPY src/FiapSub.Sales.Infrastructure.Http/FiapSub.Sales.Infrastructure.Http.csproj src/FiapSub.Sales.Infrastructure.Http/
+COPY src/FiapSub.Sales.Api/FiapSub.Sales.Api.csproj src/FiapSub.Sales.Api/
+RUN dotnet restore src/FiapSub.Sales.Api/FiapSub.Sales.Api.csproj
 
-COPY sales/src/ sales/src/
-RUN dotnet publish sales/src/FiapSub.Sales.Api/FiapSub.Sales.Api.csproj \
+COPY src/ src/
+RUN dotnet publish src/FiapSub.Sales.Api/FiapSub.Sales.Api.csproj \
         --configuration Release --no-restore --output /app
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
