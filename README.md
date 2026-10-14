@@ -37,9 +37,13 @@ preço, comprar e confirmar o pagamento. É Svelte com **JavaScript e CSS escrit
 framework de CSS, e as APIs são alcançadas por prefixos do mesmo origin (`/core-api`,
 `/sales-api`) reescritos por um proxy — logo **nenhum dos serviços precisa de CORS**.
 
-O `scripts/e2e.sh` é o roteiro do vídeo de demonstração: ele cadastra veículos, lista por preço,
+O `scripts/e2e.sh` exercita a solução inteira sem interação: cadastra veículos, lista por preço,
 compra, dispara o webhook de pagamento, confere a venda efetivada e também os caminhos negativos
 (pagamento cancelado, compra duplicada, webhook repetido, rota interna sem token).
+
+Para gravar o vídeo exigido no enunciado, o passo a passo bloco a bloco está em
+[`docs/ROTEIRO-VIDEO.md`](docs/ROTEIRO-VIDEO.md) — com os dados a usar, as falas sugeridas, os
+comandos conferidos e um checklist final.
 
 ```bash
 docker compose down              # para tudo, preservando os dados
@@ -388,7 +392,7 @@ rodaram na raiz sem nenhum outro ajuste — 172 testes a 99,8% no `core` e 197 a
 ├── global.json                 SDK fixado + runner de testes (Microsoft.Testing.Platform)
 ├── scripts/e2e.sh              roteiro ponta a ponta / do vídeo
 ├── .github/workflows/          CI/CD de cada serviço
-├── docs/                       enunciado (PDF) e specs
+├── docs/                       enunciado (PDF), specs e o roteiro do vídeo
 ├── core/                       → repositório 1
 ├── sales/                      → repositório 2
 └── web/                        interface (extra, Svelte + JS + CSS à mão)
