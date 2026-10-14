@@ -1,7 +1,8 @@
 <script>
   import Modal from './Modal.svelte';
   import { sales, describe } from '../lib/api.js';
-  import { brl, maskCpf, isValidCpf, digits } from '../lib/format.js';
+  import Figure from './Figure.svelte';
+  import { maskCpf, isValidCpf, digits } from '../lib/format.js';
   import { toasts } from '../lib/toasts.svelte.js';
   import { saleLog } from '../lib/sale-log.svelte.js';
 
@@ -57,12 +58,12 @@
 
 <Modal title="Comprar veículo" {onclose}>
   <form id="buy-form" class="stack" onsubmit={submit}>
-    <div class="summary">
+    <div class="subject">
       <div class="grow">
         <strong>{vehicle.brand} {vehicle.model}</strong>
         <p class="small muted">{vehicle.year} · {vehicle.color}</p>
       </div>
-      <span class="price tnum">{brl(vehicle.price, vehicle.currency)}</span>
+      <Figure amount={vehicle.price} currency={vehicle.currency} large />
     </div>
 
     <div class="field" class:invalid={cpfError}>
@@ -80,16 +81,14 @@
       {#if cpfError}
         <span class="error">{cpfError}</span>
       {:else}
-        <span class="hint">Os dígitos verificadores são conferidos aqui e no domínio.</span>
+        <span class="hint">Conferido aqui por cortesia; quem decide é o domínio, no servidor.</span>
       {/if}
     </div>
 
     <div class="field">
       <label for="buy-date">Data da venda <span class="faint">(opcional)</span></label>
       <input id="buy-date" type="datetime-local" bind:value={saleDate} />
-      <span class="hint">
-        Em branco, vale o instante em que o pagamento for aprovado.
-      </span>
+      <span class="hint">Em branco, vale o instante em que o pagamento for aprovado.</span>
     </div>
 
     <p class="small muted">
@@ -108,20 +107,19 @@
 </Modal>
 
 <style>
-  .summary {
+  /* O que está sendo comprado fica no alto, destacado da entrada de dados. */
+  .subject {
     display: flex;
     align-items: center;
     gap: 14px;
-    padding: 12px 14px;
-    background: var(--surface-2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
+    padding: 11px 13px;
+    background: var(--sheet-2);
+    border: 1px solid var(--rule);
+    border-left: 2px solid var(--accent);
+    border-radius: var(--corner);
   }
 
-  .price {
-    font-size: 1.15rem;
-    font-weight: 650;
-    color: var(--accent);
-    white-space: nowrap;
+  .subject strong {
+    font-weight: 620;
   }
 </style>

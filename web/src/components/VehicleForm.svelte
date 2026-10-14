@@ -89,7 +89,7 @@
       <div class="field" class:invalid={errorFor('Year')}>
         <label for="v-year">Ano</label>
         <input id="v-year" type="number" bind:value={year} min="1900" max={nextYear} required />
-        <span class="hint">De 1900 até {nextYear}.</span>
+        <span class="hint">De 1900 a {nextYear}.</span>
         {#if errorFor('Year')}<span class="error">{errorFor('Year')}</span>{/if}
       </div>
 
@@ -103,7 +103,7 @@
     <div class="field" class:invalid={errorFor('Price')}>
       <label for="v-price">Preço (BRL)</label>
       <input id="v-price" type="number" bind:value={price} min="0.01" step="0.01" required />
-      <span class="hint">Maior que zero, no máximo duas casas decimais.</span>
+      <span class="hint">Maior que zero, com até duas casas decimais.</span>
       {#if errorFor('Price')}<span class="error">{errorFor('Price')}</span>{/if}
     </div>
 

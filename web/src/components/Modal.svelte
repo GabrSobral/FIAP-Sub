@@ -1,9 +1,11 @@
 <script>
+  import Icon from './Icon.svelte';
+
   let { title, onclose, children, footer } = $props();
 
   let dialog;
 
-  // Native <dialog> brings the focus trap, the backdrop and Escape for free.
+  // O <dialog> nativo já traz a armadilha de foco, o fundo e o Escape.
   $effect(() => {
     dialog?.showModal();
   });
@@ -11,8 +13,10 @@
 
 <dialog bind:this={dialog} onclose={onclose} oncancel={onclose}>
   <header>
-    <h3>{title}</h3>
-    <button type="button" class="btn btn-ghost" onclick={onclose} aria-label="Fechar">✕</button>
+    <h3 class="grow">{title}</h3>
+    <button type="button" class="btn btn-bare btn-icon" onclick={onclose} aria-label="Fechar">
+      <Icon name="close" size={15} />
+    </button>
   </header>
 
   <div class="body">
@@ -28,38 +32,36 @@
   dialog {
     width: min(520px, calc(100vw - 32px));
     padding: 0;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    background: var(--surface);
-    color: var(--text);
-    box-shadow: var(--shadow-lifted);
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--corner);
+    background: var(--sheet);
+    color: var(--ink);
+    /* A folha levantada do balcão: só o que flutua ganha sombra. */
+    box-shadow: var(--lift);
   }
 
   dialog::backdrop {
-    background: rgb(12 11 10 / 55%);
-    backdrop-filter: blur(2px);
+    background: rgb(16 18 20 / 52%);
   }
 
   header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 12px;
-    padding: 14px 10px 14px 18px;
-    border-bottom: 1px solid var(--border);
+    padding: 12px 10px 12px 16px;
+    border-bottom: 1px solid var(--rule);
+    background: var(--sheet-2);
   }
 
   .body {
-    padding: 18px;
+    padding: 16px;
   }
 
   footer {
     display: flex;
     justify-content: flex-end;
-    gap: 10px;
-    padding: 14px 18px;
-    border-top: 1px solid var(--border);
-    background: var(--surface-2);
-    border-radius: 0 0 var(--radius) var(--radius);
+    gap: 9px;
+    padding: 13px 16px;
+    border-top: 1px solid var(--rule);
   }
 </style>

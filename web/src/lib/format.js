@@ -1,21 +1,7 @@
-const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 const dateTime = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
-const dateOnly = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long' });
-
-/** The APIs always answer with an explicit currency, so honour it instead of assuming BRL. */
-export function brl(amount, currency = 'BRL') {
-  if (amount === null || amount === undefined) return '—';
-  if (currency === 'BRL') return money.format(amount);
-
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency }).format(amount);
-}
 
 export function at(iso) {
   return iso ? dateTime.format(new Date(iso)) : '—';
-}
-
-export function on(iso) {
-  return iso ? dateOnly.format(new Date(iso)) : '—';
 }
 
 export const digits = (value) => (value ?? '').replace(/\D/g, '');
@@ -55,4 +41,58 @@ export function isValidCpf(value) {
   return checkDigit(9) === only[9] && checkDigit(10) === only[10];
 }
 
-export const shortId = (id) => (id ? `${id.slice(0, 8)}…` : '—');
+/**
+ * Separa o símbolo dos dígitos. Numa listagem ordenada por preço o que precisa
+ * alinhar é o algarismo, não o "R$" — com ele junto, cada linha começa em uma
+ * posição diferente e a ordem crescente deixa de ser visível de relance.
+ */
+export function figure(amount, currency = 'BRL') {
+  if (amount === null || amount === undefined) return { symbol: '', value: '—' };
+
+  const parts = new Intl.NumberFormat('pt-BR', { style: 'currency', currency }).formatToParts(
+    amount,
+  );
+  const keep = (part) =>
+    part.type !== 'currency' && !(part.type === 'literal' && part.value.trim() === '');
+
+  return {
+    symbol: parts
+      .filter((part) => part.type === 'currency')
+      .map((part) => part.value)
+      .join(''),
+    value: parts
+      .filter(keep)
+      .map((part) => part.value)
+      .join(''),
+  };
+}
+
+const relative = new Intl.RelativeTimeFormat('pt-BR', { numeric: 'auto' });
+
+const STEPS = [
+  ['second', 60],
+  ['minute', 60],
+  ['hour', 24],
+  ['day', 7],
+  ['week', 4.35],
+  ['month', 12],
+];
+
+/** "agora mesmo", "há 2 minutos" — numa tela que se atualiza, isso lê melhor que um horário. */
+export function ago(iso) {
+  if (!iso) return '—';
+
+  const elapsed = (Date.now() - new Date(iso).getTime()) / 1000;
+
+  if (elapsed < 45) return 'agora mesmo';
+
+  let amount = elapsed;
+
+  for (const [unit, size] of STEPS) {
+    if (Math.abs(amount) < size) return relative.format(-Math.round(amount), unit);
+
+    amount /= size;
+  }
+
+  return relative.format(-Math.round(amount), 'year');
+}

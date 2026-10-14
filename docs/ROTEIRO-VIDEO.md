@@ -115,12 +115,16 @@ Abra os dois Swaggers e compare:
 
 Abra <http://localhost:3000>.
 
-No topo, aponte as duas pastilhas: **`core no ar`** e **`vendas no ar`**. Elas consultam
-`/health/ready` de cada serviço, que inclui o banco de cada um.
+No rodapé do rail escuro da esquerda, aponte as duas sondas — **`core :8080`** e
+**`vendas :8081`**, cada uma com o ponto verde. Elas consultam `/health/ready` de cada serviço,
+que inclui o banco de cada um, a cada dez segundos.
 
-### 3.1 — Cadastrar os veículos (aba **Catálogo**)
+> As três seções ficam nesse rail. Os atalhos **1**, **2** e **3** trocam de seção sem o mouse —
+> útil para a gravação fluir.
 
-1. Clique na aba **Catálogo**. Estado inicial: *"Catálogo vazio"*.
+### 3.1 — Cadastrar os veículos (seção **Catálogo**)
+
+1. Abra a seção **Catálogo** (atalho `2`). Estado inicial: *"Catálogo vazio"*.
 2. Clique em **Cadastrar veículo**.
 3. Preencha o veículo **A** (Toyota Corolla XEi, 2024, Prata, `164900.00`) e clique em
    **Cadastrar**.
@@ -131,11 +135,12 @@ modelo, ano, cor, preço, status **À venda** e a **versão** do agregado.
 
 > Fala: *"Cadastrei fora da ordem de preço: primeiro o mais caro, depois o mais barato."*
 
-### 3.2 — Listagem ordenada por preço (aba **Vitrine**)
+### 3.2 — Listagem ordenada por preço (seção **Vitrine**)
 
-5. Clique na aba **Vitrine**, sub-aba **À venda**.
+5. Abra a seção **Vitrine** (atalho `1`), com **À venda** selecionado.
 
-Os três aparecem numerados **1, 2, 3** na ordem **41.500 → 78.900 → 164.900**.
+Os três aparecem numerados **01, 02, 03** na ordem **41.500 → 78.900 → 164.900**, com os
+algarismos alinhados em coluna — a ordem crescente se lê de relance.
 
 > Fala: *"Do mais barato para o mais caro, como o enunciado pede. E note que a ordem de cadastro
 > foi outra. Esta listagem vem do banco do serviço de vendas — nenhuma chamada chegou ao core."*
@@ -172,7 +177,7 @@ Aparece o aviso com o **código de pagamento** (`PAY-…`). A interface muda par
 
 ### 3.5 — Efetivação da compra (webhook do pagamento)
 
-14. Aba **Pagamentos**. A venda aparece com status **Aguardando pagamento**, com CPF, valor e
+14. Seção **Pagamentos** (atalho `3`). A venda aparece com status **Aguardando pagamento**, com CPF, valor e
     código do pagamento.
 15. Clique em **Aprovar**.
 
@@ -187,7 +192,7 @@ preenchida.
 
 ### 3.6 — Idempotência do webhook
 
-18. Na aba **Pagamentos**, no painel **Notificar um código à mão**, cole o **mesmo** código de
+18. Na seção **Pagamentos**, no bloco **Notificar um código à mão**, cole o **mesmo** código de
     pagamento e clique em **Aprovar**.
 
 Aviso: *"Esse código já havia sido notificado — nada mudou (idempotente)."*
@@ -215,7 +220,7 @@ Aviso: *"Esse código já havia sido notificado — nada mudou (idempotente)."*
 
 ### 3.9 — Consultar uma venda
 
-26. Aba **Pagamentos** → painel **Consultar uma venda**. Cole o id de uma venda (está na primeira
+26. Seção **Pagamentos** → bloco **Consultar uma venda**. Cole o id de uma venda (está na primeira
     coluna da tabela) e clique em **Consultar**.
 27. Mostra status, comprador (CPF mascarado), valor, código e data da venda.
 

@@ -1,17 +1,17 @@
 <script>
-  // Vehicle and sale statuses share the same vocabulary of meaning: waiting, done, undone.
-  const TONES = {
-    Available: { tone: 'chip-ok', label: 'À venda' },
-    Reserved: { tone: 'chip-warn', label: 'Reservado' },
-    Sold: { tone: 'chip-neutral', label: 'Vendido' },
-    PendingPayment: { tone: 'chip-warn', label: 'Aguardando pagamento' },
-    Paid: { tone: 'chip-ok', label: 'Pago' },
-    Cancelled: { tone: 'chip-danger', label: 'Cancelado' },
+  // Veículo e venda falam o mesmo vocabulário: esperando, feito, desfeito.
+  const SEALS = {
+    Available: { tone: 'seal-ok', label: 'à venda' },
+    Reserved: { tone: 'seal-hold', label: 'reservado' },
+    Sold: { tone: '', label: 'vendido' },
+    PendingPayment: { tone: 'seal-hold', label: 'aguardando pagamento' },
+    Paid: { tone: 'seal-ok', label: 'pago' },
+    Cancelled: { tone: 'seal-stop', label: 'cancelado' },
   };
 
   let { status } = $props();
 
-  let info = $derived(TONES[status] ?? { tone: 'chip-neutral', label: status ?? '—' });
+  let info = $derived(SEALS[status] ?? { tone: '', label: status ?? '—' });
 </script>
 
-<span class="chip {info.tone}" title={status}>{info.label}</span>
+<span class="seal {info.tone}" title={status}>{info.label}</span>

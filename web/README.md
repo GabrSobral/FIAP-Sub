@@ -10,14 +10,15 @@ o papel de bundler.
 
 ## O que a tela faz
 
-| Aba | O que exercita | Serviço |
+| Seção | O que exercita | Serviço |
 |---|---|---|
 | **Vitrine** | Veículos **à venda** e **vendidos**, ordenados por preço (do mais barato para o mais caro), com a posição numerada para o ordenamento ficar visível. Botão de comprar, com CPF e data da venda opcional. | `sales` |
 | **Catálogo** | Cadastro e edição de veículo (marca, modelo, ano, cor, preço), com filtro por status e a versão de cada agregado. | `core` |
 | **Pagamentos** | Faz o papel do **provedor de pagamento**: chama o webhook real de aprovação/cancelamento a partir do código do pagamento. Também consulta uma venda por id. | `core` + `sales` |
 
-No cabeçalho, duas pastilhas mostram a saúde de cada serviço (`/health/ready`, que inclui o banco
-de cada um), revalidadas a cada 10 segundos.
+As três seções ficam no rail escuro da esquerda, e as teclas `1`, `2` e `3` trocam de seção. No
+rodapé do rail, duas sondas mostram a saúde de cada serviço com a porta dele (`/health/ready`, que
+inclui o banco de cada um), revalidadas a cada 10 segundos.
 
 ## Como rodar
 
@@ -61,6 +62,22 @@ caminho que funcione só num dos dois.
 O nginx também devolve `404` para qualquer coisa sob `/api/internal`: as rotas entre serviços não
 são assunto do navegador, e o token compartilhado nunca chega ao cliente.
 
+## Identidade visual
+
+A tela é uma **ficha de operação de pátio**, não um painel genérico: rail de tinta à esquerda com a
+marca da placa, papel levemente oliva, réguas de 1 px em vez de cartões flutuantes — sombra só no
+que de fato flutua (diálogo e aviso) — e cantos de 3 px, porque a folha é cortada, não arredondada.
+O único tom saturado é o azul de placa do acento.
+
+Duas famílias, três papéis: **Archivo** (variável) no título e na interface, **IBM Plex Mono** no
+que é dado — id, código de pagamento, CPF e preço. Os arquivos `.woff2` vêm **no bundle**, só com o
+subconjunto latino (`@fontsource`), e não de CDN: a interface abre idêntica numa máquina sem
+internet, o que importa na hora de gravar.
+
+Nos preços o símbolo é separado dos algarismos (`figure()` em `format.js`). Numa listagem ordenada
+por preço o que precisa alinhar é o algarismo; com o `R$` colado, cada linha começa numa posição
+diferente e a ordem crescente deixa de ser visível de relance.
+
 ## Decisões que valem explicação
 
 **A lista de pagamentos é memória local.** A API de vendas expõe uma venda apenas por id
@@ -89,11 +106,11 @@ web/
 ├── Dockerfile              build com node, runtime em nginx
 └── src/
     ├── main.js             ponto de entrada
-    ├── app.css             design tokens e estilos globais, escritos à mão
-    ├── App.svelte          cabeçalho, navegação e saúde dos serviços
+    ├── app.css             fontes, design tokens e estilos globais, escritos à mão
+    ├── App.svelte          rail de navegação, sondas de saúde e atalhos de teclado
     ├── lib/
     │   ├── api.js          cliente das duas APIs, com ApiError sobre ProblemDetails
-    │   ├── format.js       moeda, datas, máscara e validação de CPF
+    │   ├── format.js       moeda, datas relativas, máscara e validação de CPF
     │   ├── toasts.svelte.js    notificações
     │   └── sale-log.svelte.js  vendas abertas neste navegador
     └── components/
@@ -102,7 +119,9 @@ web/
         ├── Catalogue.svelte    cadastro e edição
         ├── VehicleForm.svelte  formulário do veículo
         ├── Payments.svelte     simulador do provedor + consulta de venda
-        ├── StatusChip.svelte   pastilha de status
+        ├── StatusChip.svelte   selo de status
+        ├── Figure.svelte       cifra com símbolo e algarismos separados
+        ├── Icon.svelte         ícones em SVG traçado, 16 px na grade
         ├── Modal.svelte        diálogo sobre <dialog> nativo
         └── Toasts.svelte       pilha de notificações
 ```
@@ -114,6 +133,9 @@ web/
 - **Erros são legíveis**: o `ProblemDetails` das APIs é desempacotado — `detail` vira a mensagem, e
   `errors` por campo vira marcação no próprio input.
 - **Preços e ids com algarismos tabulares**, para as colunas alinharem.
+- **Ícones próprios em SVG**, 16 px na grade e traço de 1,6 — emoji sai diferente em cada sistema
+  operacional, e aqui a tela precisa ser a mesma em qualquer máquina.
+- **Atalhos `1` / `2` / `3`** para as seções, desligados enquanto o foco está num campo ou diálogo.
 - `<dialog>` nativo nos modais, o que traz foco preso, backdrop e `Esc` sem JavaScript extra.
 - `prefers-reduced-motion` respeitado.
 - Falhas ficam na tela até serem fechadas; sucessos desaparecem sozinhos.
@@ -125,5 +147,6 @@ npm run build      # gera dist/
 npm run preview    # serve dist/ em http://localhost:4173
 ```
 
-O bundle fica em torno de **26 kB gzip** (JS + CSS), sem dependências de runtime além do próprio
-Svelte compilado.
+O bundle fica em torno de **32 kB gzip** (JS + CSS), mais **97 kB** de fontes `.woff2` (subconjunto
+latino, servidas com cache de um ano). Nenhuma dependência de runtime além do Svelte compilado e dos
+dois pacotes de fonte, que são só arquivos.

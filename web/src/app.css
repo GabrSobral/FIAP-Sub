@@ -1,72 +1,170 @@
 /* ---------------------------------------------------------------------------
-   Design tokens. The full light palette lives on :root; the dark blocks only
-   redefine what changes, so no colour has its single definition inside a
-   media query.
+   Pátio — folha de operação.
+
+   Duas famílias, três papéis: Archivo para título e interface, IBM Plex Mono
+   para o que é dado (id, código, CPF, preço). As fontes vêm no bundle, não de
+   CDN, para a interface abrir igual numa máquina sem internet.
+   --------------------------------------------------------------------------- */
+
+@font-face {
+  font-family: "Archivo Pátio";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("@fontsource-variable/archivo/files/archivo-latin-wght-normal.woff2")
+    format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+    U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Archivo Pátio";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("@fontsource-variable/archivo/files/archivo-latin-ext-wght-normal.woff2")
+    format("woff2-variations");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0,
+    U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "Plex Mono Pátio";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-400-normal.woff2")
+    format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+    U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Plex Mono Pátio";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-500-normal.woff2")
+    format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+    U+FEFF, U+FFFD;
+}
+
+/* ---------------------------------------------------------------------------
+   Tokens. A paleta clara inteira mora no :root; os blocos escuros só
+   redefinem o que muda, então nenhuma cor tem sua única definição dentro de
+   uma media query.
    --------------------------------------------------------------------------- */
 :root {
-  --bg: #f4f2ee;
-  --bg-grain: #ece9e3;
-  --surface: #ffffff;
-  --surface-2: #f7f5f1;
-  --surface-3: #ece8e1;
-  --border: #dcd7cd;
-  --border-strong: #c6bfb2;
-  --text: #1b1a17;
-  --text-muted: #6c675e;
-  --text-faint: #938d82;
+  /* Papel levemente oliva, como o das fichas que ficam no balcão do pátio. */
+  --paper: #e9eae3;
+  --sheet: #fcfcfa;
+  --sheet-2: #f3f3ec;
+  --sheet-3: #e8e9e0;
+  --rule: #d5d6ca;
+  --rule-strong: #b6b7a8;
 
-  --accent: #b2540d;
-  --accent-hover: #96450a;
+  --ink: #15171a;
+  --ink-2: #5b5e63;
+  --ink-3: #8a8d90;
+
+  /* Azul de placa: o único tom saturado da tela. */
+  --accent: #1b4079;
+  --accent-hi: #112c56;
+  --accent-wash: #e3e9f2;
   --accent-ink: #ffffff;
-  --accent-soft: #fbeee2;
 
-  --ok: #1d6f45;
-  --ok-soft: #e3f1e8;
-  --warn: #8a5a00;
-  --warn-soft: #faf0d9;
-  --danger: #9c2a2a;
-  --danger-soft: #f8e6e4;
+  /* Em cima da tinta do rail o azul precisa subir de luminância. */
+  --board: #15171a;
+  --board-2: #202327;
+  --board-rule: #32363b;
+  --board-text: #e8e9e3;
+  --board-text-2: #9a9d9f;
+  --board-accent: #9fbde8;
 
-  --radius: 10px;
-  --radius-sm: 6px;
-  --shadow: 0 1px 2px rgb(27 26 23 / 6%), 0 8px 24px -12px rgb(27 26 23 / 18%);
-  --shadow-lifted: 0 2px 4px rgb(27 26 23 / 8%), 0 18px 40px -18px rgb(27 26 23 / 28%);
+  --ok: #1a6b43;
+  --ok-wash: #e2eee7;
+  --hold: #87580a;
+  --hold-wash: #f6edda;
+  --stop: #93252a;
+  --stop-wash: #f6e4e3;
 
-  --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
-    sans-serif;
-  --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  /* Cantos quase retos: a folha é cortada, não arredondada. */
+  --corner: 3px;
+  --lift: 0 10px 30px -14px rgb(21 23 26 / 35%), 0 2px 6px -2px rgb(21 23 26 / 14%);
+
+  --font: "Archivo Pátio", "Archivo", "Helvetica Neue", Arial, system-ui, sans-serif;
+  --mono: "Plex Mono Pátio", "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
 
   color-scheme: light dark;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #131312;
-    --bg-grain: #191918;
-    --surface: #1c1c1a;
-    --surface-2: #232320;
-    --surface-3: #2c2b28;
-    --border: #322f2b;
-    --border-strong: #46423c;
-    --text: #ece9e3;
-    --text-muted: #9d978d;
-    --text-faint: #7b756c;
+    --paper: #121316;
+    --sheet: #1a1c20;
+    --sheet-2: #21242a;
+    --sheet-3: #292d33;
+    --rule: #2f3339;
+    --rule-strong: #474c53;
 
-    --accent: #e4863e;
-    --accent-hover: #f0954f;
-    --accent-ink: #1d1206;
-    --accent-soft: #2a1d10;
+    --ink: #e9eae4;
+    --ink-2: #9ca0a6;
+    --ink-3: #74787e;
 
-    --ok: #5fc08c;
-    --ok-soft: #152a1f;
-    --warn: #ddb45c;
-    --warn-soft: #2a2210;
-    --danger: #e98b85;
-    --danger-soft: #2d1614;
+    --accent: #9fbde8;
+    --accent-hi: #bdd2f1;
+    --accent-wash: #1a2435;
+    --accent-ink: #0d1726;
 
-    --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 8px 24px -12px rgb(0 0 0 / 60%);
-    --shadow-lifted: 0 2px 4px rgb(0 0 0 / 45%), 0 18px 40px -18px rgb(0 0 0 / 70%);
+    --board: #0e0f12;
+    --board-2: #16181c;
+    --board-rule: #25282d;
+
+    --ok: #63bf8d;
+    --ok-wash: #14271d;
+    --hold: #d5ac5d;
+    --hold-wash: #271f0f;
+    --stop: #e4867f;
+    --stop-wash: #2a1513;
+
+    --lift: 0 10px 30px -12px rgb(0 0 0 / 70%), 0 2px 6px -2px rgb(0 0 0 / 50%);
   }
+}
+
+:root[data-theme="dark"] {
+  --paper: #121316;
+  --sheet: #1a1c20;
+  --sheet-2: #21242a;
+  --sheet-3: #292d33;
+  --rule: #2f3339;
+  --rule-strong: #474c53;
+
+  --ink: #e9eae4;
+  --ink-2: #9ca0a6;
+  --ink-3: #74787e;
+
+  --accent: #9fbde8;
+  --accent-hi: #bdd2f1;
+  --accent-wash: #1a2435;
+  --accent-ink: #0d1726;
+
+  --board: #0e0f12;
+  --board-2: #16181c;
+  --board-rule: #25282d;
+
+  --ok: #63bf8d;
+  --ok-wash: #14271d;
+  --hold: #d5ac5d;
+  --hold-wash: #271f0f;
+  --stop: #e4867f;
+  --stop-wash: #2a1513;
+
+  --lift: 0 10px 30px -12px rgb(0 0 0 / 70%), 0 2px 6px -2px rgb(0 0 0 / 50%);
 }
 
 * {
@@ -80,27 +178,24 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
-  background-color: var(--bg);
-  /* A very faint diagonal grain, so large empty areas do not read as unfinished. */
-  background-image: repeating-linear-gradient(
-    135deg,
-    transparent 0 14px,
-    var(--bg-grain) 14px 15px
-  );
-  color: var(--text);
+  background: var(--paper);
+  color: var(--ink);
   font-family: var(--font);
   font-size: 15px;
-  line-height: 1.55;
+  font-weight: 420;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 h1,
 h2,
 h3 {
   margin: 0;
-  line-height: 1.2;
-  letter-spacing: -0.015em;
-  font-weight: 650;
+  font-weight: 680;
+  line-height: 1.15;
+  letter-spacing: -0.021em;
+  text-wrap: balance;
 }
 
 h1 {
@@ -108,7 +203,7 @@ h1 {
 }
 
 h2 {
-  font-size: 1.3rem;
+  font-size: 1.375rem;
 }
 
 h3 {
@@ -127,11 +222,11 @@ a {
 code,
 .mono {
   font-family: var(--mono);
-  font-size: 0.86em;
+  font-size: 0.855em;
   font-variant-ligatures: none;
 }
 
-/* Prices and ids line up column-wise only with tabular figures. */
+/* Preço, id e versão só se leem em coluna com dígito de largura fixa. */
 .tnum {
   font-variant-numeric: tabular-nums;
 }
@@ -139,47 +234,39 @@ code,
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-  border-radius: var(--radius-sm);
+  border-radius: 2px;
 }
 
-/* --------------------------------------------------------------------------- */
-
-.app {
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: 0 20px 72px;
-}
+/* --- utilidades ----------------------------------------------------------- */
 
 .muted {
-  color: var(--text-muted);
+  color: var(--ink-2);
 }
 
 .faint {
-  color: var(--text-faint);
+  color: var(--ink-3);
 }
 
 .small {
   font-size: 0.8125rem;
 }
 
+.lede {
+  max-width: 62ch;
+  color: var(--ink-2);
+  font-size: 0.875rem;
+}
+
 .stack {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 18px;
 }
 
 .row {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
-}
-
-.spread {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
   flex-wrap: wrap;
 }
 
@@ -194,63 +281,75 @@ code,
   white-space: nowrap;
 }
 
-/* --- panel ---------------------------------------------------------------- */
+/* --- folha ---------------------------------------------------------------- */
 
-.panel {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+.sheet {
+  background: var(--sheet);
+  border: 1px solid var(--rule);
+  border-radius: var(--corner);
 }
 
-.panel-head {
-  padding: 16px 18px;
-  border-bottom: 1px solid var(--border);
+/* Cabeçalho de seção: título e ações na mesma linha-base, régua embaixo. */
+.sheet-head {
   display: flex;
-  align-items: flex-start;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 16px;
+  gap: 20px;
   flex-wrap: wrap;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--rule);
 }
 
-.panel-body {
-  padding: 18px;
+.sheet-head h3 {
+  letter-spacing: -0.015em;
 }
 
-.panel-body.tight {
+.sheet-body {
+  padding: 16px;
+}
+
+.sheet-body.flush {
   padding: 0;
 }
 
-/* --- buttons -------------------------------------------------------------- */
+/* Rodapé de contagem — o total vive na folha, não num card separado. */
+.tally {
+  padding: 9px 16px;
+  border-top: 1px solid var(--rule);
+  background: var(--sheet-2);
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+  border-radius: 0 0 var(--corner) var(--corner);
+}
+
+/* --- botões --------------------------------------------------------------- */
 
 .btn {
   appearance: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  padding: 8px 14px;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  background: var(--surface-2);
-  color: var(--text);
+  gap: 6px;
+  padding: 7px 13px;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--corner);
+  background: var(--sheet);
+  color: var(--ink);
   font: inherit;
   font-size: 0.875rem;
-  font-weight: 550;
+  font-weight: 560;
+  letter-spacing: -0.005em;
   cursor: pointer;
-  transition: background-color 120ms ease, border-color 120ms ease, transform 80ms ease;
+  transition: background-color 110ms ease, border-color 110ms ease, color 110ms ease;
 }
 
 .btn:hover:not(:disabled) {
-  background: var(--surface-3);
-}
-
-.btn:active:not(:disabled) {
-  transform: translateY(1px);
+  background: var(--sheet-2);
+  border-color: var(--ink-3);
 }
 
 .btn:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
@@ -261,32 +360,43 @@ code,
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
+  background: var(--accent-hi);
+  border-color: var(--accent-hi);
 }
 
 .btn-ok {
-  background: var(--ok-soft);
-  border-color: color-mix(in srgb, var(--ok) 45%, transparent);
+  background: var(--ok-wash);
+  border-color: color-mix(in srgb, var(--ok) 42%, transparent);
   color: var(--ok);
 }
 
-.btn-danger {
-  background: var(--danger-soft);
-  border-color: color-mix(in srgb, var(--danger) 45%, transparent);
-  color: var(--danger);
+.btn-ok:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ok) 16%, var(--ok-wash));
+  border-color: var(--ok);
 }
 
-.btn-ghost {
+.btn-stop {
+  background: var(--stop-wash);
+  border-color: color-mix(in srgb, var(--stop) 42%, transparent);
+  color: var(--stop);
+}
+
+.btn-stop:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--stop) 16%, var(--stop-wash));
+  border-color: var(--stop);
+}
+
+.btn-bare {
   background: transparent;
   border-color: transparent;
-  color: var(--text-muted);
+  color: var(--ink-2);
   padding: 6px 8px;
 }
 
-.btn-ghost:hover:not(:disabled) {
-  background: var(--surface-3);
-  color: var(--text);
+.btn-bare:hover:not(:disabled) {
+  background: var(--sheet-3);
+  border-color: transparent;
+  color: var(--ink);
 }
 
 .btn-sm {
@@ -294,109 +404,104 @@ code,
   font-size: 0.8125rem;
 }
 
-/* --- forms ---------------------------------------------------------------- */
+.btn-icon {
+  padding: 6px;
+  gap: 0;
+}
+
+/* --- campos --------------------------------------------------------------- */
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
 }
 
 .field > label {
   font-size: 0.8125rem;
-  font-weight: 550;
-  color: var(--text-muted);
+  font-weight: 560;
+  color: var(--ink-2);
 }
 
 .field input,
 .field select {
   width: 100%;
-  padding: 8px 11px;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--text);
+  padding: 7px 10px;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--corner);
+  background: var(--sheet);
+  color: var(--ink);
   font: inherit;
   font-size: 0.9375rem;
 }
 
+.field input:focus,
+.field select:focus {
+  border-color: var(--accent);
+}
+
+.field input.mono {
+  font-family: var(--mono);
+  font-size: 0.875rem;
+}
+
 .field input:disabled {
-  background: var(--surface-2);
-  color: var(--text-muted);
+  background: var(--sheet-2);
+  color: var(--ink-2);
 }
 
 .field .hint {
   font-size: 0.75rem;
-  color: var(--text-faint);
+  color: var(--ink-3);
+  max-width: 54ch;
 }
 
 .field .error {
   font-size: 0.75rem;
-  color: var(--danger);
+  font-weight: 540;
+  color: var(--stop);
 }
 
 .field.invalid input {
-  border-color: var(--danger);
+  border-color: var(--stop);
 }
 
 .grid-2 {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
   gap: 14px;
 }
 
-/* --- chips ---------------------------------------------------------------- */
+/* --- selo de status ------------------------------------------------------- */
 
-.chip {
+.seal {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 2px 9px;
-  border-radius: 999px;
-  border: 1px solid transparent;
+  padding: 1px 7px;
+  border-left: 2px solid currentColor;
+  background: var(--sheet-3);
+  color: var(--ink-2);
   font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.01em;
+  font-weight: 580;
   white-space: nowrap;
 }
 
-.chip::before {
-  content: "";
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-}
-
-.chip.plain::before {
-  display: none;
-}
-
-.chip-ok {
-  background: var(--ok-soft);
-  border-color: color-mix(in srgb, var(--ok) 35%, transparent);
+.seal-ok {
+  background: var(--ok-wash);
   color: var(--ok);
 }
 
-.chip-warn {
-  background: var(--warn-soft);
-  border-color: color-mix(in srgb, var(--warn) 35%, transparent);
-  color: var(--warn);
+.seal-hold {
+  background: var(--hold-wash);
+  color: var(--hold);
 }
 
-.chip-danger {
-  background: var(--danger-soft);
-  border-color: color-mix(in srgb, var(--danger) 35%, transparent);
-  color: var(--danger);
+.seal-stop {
+  background: var(--stop-wash);
+  color: var(--stop);
 }
 
-.chip-neutral {
-  background: var(--surface-3);
-  border-color: var(--border);
-  color: var(--text-muted);
-}
-
-/* --- tables --------------------------------------------------------------- */
+/* --- tabelas -------------------------------------------------------------- */
 
 .table-scroll {
   overflow-x: auto;
@@ -405,24 +510,23 @@ code,
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
 }
 
 th {
   text-align: left;
-  font-size: 0.75rem;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--rule-strong);
+  background: var(--sheet-2);
+  color: var(--ink-2);
+  font-size: 0.78125rem;
   font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--border);
   white-space: nowrap;
 }
 
 td {
-  padding: 11px 14px;
-  border-bottom: 1px solid var(--border);
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--rule);
   vertical-align: middle;
 }
 
@@ -431,7 +535,7 @@ tbody tr:last-child td {
 }
 
 tbody tr:hover td {
-  background: var(--surface-2);
+  background: var(--sheet-2);
 }
 
 .num {
@@ -439,27 +543,43 @@ tbody tr:hover td {
   font-variant-numeric: tabular-nums;
 }
 
-/* --- misc ----------------------------------------------------------------- */
+/* --- vazio ---------------------------------------------------------------- */
 
-.empty {
-  padding: 40px 18px;
-  text-align: center;
-  color: var(--text-muted);
+/* Alinhado à esquerda: a folha continua sendo uma folha quando está em branco. */
+.blank {
+  display: flex;
+  gap: 12px;
+  padding: 26px 16px 30px;
+  color: var(--ink-2);
+  font-size: 0.875rem;
 }
 
-.empty strong {
+.blank .blank-mark {
+  flex: none;
+  color: var(--ink-3);
+  padding-top: 1px;
+}
+
+.blank strong {
   display: block;
-  color: var(--text);
-  margin-bottom: 4px;
+  color: var(--ink);
+  font-weight: 620;
+  margin-bottom: 3px;
 }
+
+.blank p {
+  max-width: 64ch;
+}
+
+/* --- fiapo giratório ------------------------------------------------------ */
 
 .spinner {
-  width: 14px;
-  height: 14px;
-  border: 2px solid color-mix(in srgb, currentColor 25%, transparent);
+  width: 13px;
+  height: 13px;
+  border: 2px solid color-mix(in srgb, currentColor 22%, transparent);
   border-top-color: currentColor;
   border-radius: 50%;
-  animation: spin 700ms linear infinite;
+  animation: spin 650ms linear infinite;
   flex: none;
 }
 
@@ -470,8 +590,11 @@ tbody tr:hover td {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
 }
@@ -485,4 +608,109 @@ tbody tr:hover td {
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
+}
+
+/* --- cabeçalho de seção --------------------------------------------------- */
+
+/* Título e ações na mesma linha, régua embaixo. Sem herói, sem cartão só para
+   segurar um título. */
+.page {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--rule-strong);
+}
+
+.page h2 {
+  margin-bottom: 3px;
+}
+
+/* --- escada de preços ----------------------------------------------------- */
+
+/* A exigência é "ordenado por preço, do menor para o maior". A ordem fica
+   legível porque a posição está escrita e os algarismos alinham em coluna. */
+.ladder {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ladder li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.ladder li:last-child {
+  border-bottom: none;
+}
+
+.ladder li:hover {
+  background: var(--sheet-2);
+}
+
+.ladder .pos {
+  flex: none;
+  width: 1.6rem;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-3);
+  text-align: right;
+}
+
+.ladder .name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ladder .name strong {
+  font-weight: 620;
+  letter-spacing: -0.012em;
+}
+
+.ladder .meta {
+  font-size: 0.78125rem;
+  color: var(--ink-2);
+}
+
+/* --- cifra ---------------------------------------------------------------- */
+
+/* Largura fixa com o símbolo à esquerda e os algarismos à direita: é o que faz
+   o "R$" de uma linha ficar embaixo do da outra, como numa coluna de livro
+   caixa. Sem isso, só a borda direita alinharia. */
+.figure {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 7rem;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.figure .symbol {
+  font-size: 0.72em;
+  font-weight: 400;
+  color: var(--ink-3);
+}
+
+.figure .value {
+  font-weight: 500;
+}
+
+.figure-lg {
+  min-width: 9.5rem;
+}
+
+.figure-lg .value {
+  font-size: 1.0625rem;
 }
