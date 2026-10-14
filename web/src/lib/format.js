@@ -6,7 +6,7 @@ export function at(iso) {
 
 export const digits = (value) => (value ?? '').replace(/\D/g, '');
 
-/** Formats as the CPF is typed: 000.000.000-00. */
+/** Formata enquanto digita: 000.000.000-00. */
 export function maskCpf(value) {
   const only = digits(value).slice(0, 11);
 
@@ -17,8 +17,8 @@ export function maskCpf(value) {
 }
 
 /**
- * Same check-digit algorithm the Cpf value object enforces on the server. Running it here is a
- * courtesy to the person typing, not a security boundary: the domain still has the final say.
+ * Mesmo algoritmo do value object Cpf, no servidor. Aqui é cortesia com quem digita,
+ * não fronteira de segurança — quem decide continua sendo o domínio.
  */
 export function isValidCpf(value) {
   const only = digits(value);
@@ -41,11 +41,7 @@ export function isValidCpf(value) {
   return checkDigit(9) === only[9] && checkDigit(10) === only[10];
 }
 
-/**
- * Separa o símbolo dos dígitos. Numa listagem ordenada por preço o que precisa
- * alinhar é o algarismo, não o "R$" — com ele junto, cada linha começa em uma
- * posição diferente e a ordem crescente deixa de ser visível de relance.
- */
+/** Separa o símbolo dos algarismos, para a coluna de preço alinhar. */
 export function figure(amount, currency = 'BRL') {
   if (amount === null || amount === undefined) return { symbol: '', value: '—' };
 
@@ -78,7 +74,7 @@ const STEPS = [
   ['month', 12],
 ];
 
-/** "agora mesmo", "há 2 minutos" — numa tela que se atualiza, isso lê melhor que um horário. */
+/** "agora mesmo", "há 2 minutos". */
 export function ago(iso) {
   if (!iso) return '—';
 

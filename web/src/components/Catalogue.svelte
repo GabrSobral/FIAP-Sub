@@ -146,7 +146,7 @@
                   <td><StatusChip status={vehicle.status} /></td>
                   <td class="mono faint">{vehicle.paymentCode ?? '—'}</td>
                   <td class="num">{vehicle.version}</td>
-                  <td class="small muted">{at(vehicle.updatedAt)}</td>
+                  <td class="small muted nowrap">{at(vehicle.updatedAt)}</td>
                   <td>
                     <button
                       type="button"
@@ -184,18 +184,18 @@
   select {
     padding: 6px 9px;
     border: 1px solid var(--rule-strong);
-    border-radius: var(--corner);
+    border-radius: var(--radius-sm);
     background: var(--sheet);
     color: var(--ink);
     font: inherit;
     font-size: 0.8125rem;
   }
 
-  /* O id completo é longo e ninguém o digita: fica clicável para copiar. */
   .id {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: 4px;
+    margin-top: 2px;
     appearance: none;
     border: none;
     background: none;

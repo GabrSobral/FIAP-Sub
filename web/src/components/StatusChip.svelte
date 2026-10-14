@@ -1,5 +1,4 @@
 <script>
-  // Veículo e venda falam o mesmo vocabulário: esperando, feito, desfeito.
   const SEALS = {
     Available: { tone: 'seal-ok', label: 'à venda' },
     Reserved: { tone: 'seal-hold', label: 'reservado' },

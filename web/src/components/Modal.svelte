@@ -5,7 +5,7 @@
 
   let dialog;
 
-  // O <dialog> nativo já traz a armadilha de foco, o fundo e o Escape.
+  // <dialog> nativo já dá foco preso, backdrop e Escape.
   $effect(() => {
     dialog?.showModal();
   });
@@ -33,10 +33,10 @@
     width: min(520px, calc(100vw - 32px));
     padding: 0;
     border: 1px solid var(--rule-strong);
-    border-radius: var(--corner);
+    border-radius: var(--radius);
+    overflow: hidden;
     background: var(--sheet);
     color: var(--ink);
-    /* A folha levantada do balcão: só o que flutua ganha sombra. */
     box-shadow: var(--lift);
   }
 

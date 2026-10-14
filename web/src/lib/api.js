@@ -1,10 +1,10 @@
-// Both APIs are reached through same-origin prefixes that a proxy rewrites: Vite's dev server
-// during `npm run dev`, nginx inside the container. Nothing here is cross-origin, so no preflight
-// is issued and neither service needs CORS turned on.
+// As duas APIs são alcançadas por prefixos do mesmo origin, reescritos por um proxy:
+// o dev server do Vite no `npm run dev`, o nginx dentro do container. Nada aqui é
+// cross-origin, então não há preflight e nenhum dos serviços precisa de CORS.
 const CORE = import.meta.env.VITE_CORE_API ?? '/core-api';
 const SALES = import.meta.env.VITE_SALES_API ?? '/sales-api';
 
-/** A non-2xx answer, carrying the ProblemDetails body the services return. */
+/** Resposta fora do 2xx, carregando o ProblemDetails que os serviços devolvem. */
 export class ApiError extends Error {
   constructor(status, problem, fallbackMessage) {
     super(problem?.detail || problem?.title || fallbackMessage);
@@ -13,18 +13,18 @@ export class ApiError extends Error {
     this.problem = problem;
   }
 
-  /** Stable machine-readable code, e.g. `vehicle.not_available`. */
+  /** Código estável, do tipo `vehicle.not_available`. */
   get code() {
     return this.problem?.code ?? null;
   }
 
-  /** Per-field messages, present when the failure came from request validation. */
+  /** Mensagens por campo, presentes quando a falha veio da validação. */
   get fieldErrors() {
     return this.problem?.errors ?? null;
   }
 }
 
-/** The network never answered — a different problem from "the service said no". */
+/** A rede não respondeu. Problema diferente de "o serviço disse não". */
 export class NetworkError extends Error {
   constructor(cause) {
     super('Não foi possível falar com o serviço.');
@@ -82,7 +82,7 @@ const query = (params) => {
   return text ? `?${text}` : '';
 };
 
-/** Vehicle catalogue and the payment webhook. */
+/** Catálogo de veículos e webhook de pagamento. */
 export const core = {
   ready: (signal) => request(CORE, '/health/ready', { signal }),
 
@@ -98,14 +98,14 @@ export const core = {
     request(CORE, `/api/vehicles${query({ status, page, pageSize })}`, { signal }),
 
   /**
-   * Stands in for the payment provider. It is the real webhook, called with the payment code the
-   * sales service handed out when the purchase was opened.
+   * Faz o papel do provedor. É o webhook de verdade, chamado com o código que o
+   * serviço de vendas entregou quando a compra foi aberta.
    */
   notifyPayment: ({ paymentCode, status }, signal) =>
     request(CORE, '/api/webhooks/payments', { method: 'POST', body: { paymentCode, status }, signal }),
 };
 
-/** Public listings and purchases. */
+/** Listagens públicas e compras. */
 export const sales = {
   ready: (signal) => request(SALES, '/health/ready', { signal }),
 
@@ -121,7 +121,7 @@ export const sales = {
   getSale: (id, signal) => request(SALES, `/api/sales/${id}`, { signal }),
 };
 
-/** Turns any thrown error into a sentence worth showing a person. */
+/** Transforma qualquer erro numa frase que vale mostrar para alguém. */
 export function describe(error) {
   if (error instanceof ApiError) {
     const fields = error.fieldErrors;

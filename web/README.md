@@ -64,19 +64,18 @@ são assunto do navegador, e o token compartilhado nunca chega ao cliente.
 
 ## Identidade visual
 
-A tela é uma **ficha de operação de pátio**, não um painel genérico: rail de tinta à esquerda com a
-marca da placa, papel levemente oliva, réguas de 1 px em vez de cartões flutuantes — sombra só no
-que de fato flutua (diálogo e aviso) — e cantos de 3 px, porque a folha é cortada, não arredondada.
-O único tom saturado é o azul de placa do acento.
+Rail escuro fixo à esquerda com a marca da placa, papel levemente oliva e azul de placa como único
+tom saturado. Os painéis são cartões de canto 12 px com borda de 1 px e sombra discreta; diálogo e
+notificação têm sombra mais forte, por estarem de fato por cima.
 
-Duas famílias, três papéis: **Archivo** (variável) no título e na interface, **IBM Plex Mono** no
-que é dado — id, código de pagamento, CPF e preço. Os arquivos `.woff2` vêm **no bundle**, só com o
-subconjunto latino (`@fontsource`), e não de CDN: a interface abre idêntica numa máquina sem
-internet, o que importa na hora de gravar.
+Duas famílias: **Archivo** (variável) no texto e na interface, **IBM Plex Mono** no que é dado —
+id, código de pagamento, CPF e preço. Os `.woff2` vêm no bundle via `@fontsource`, só com o
+subconjunto latino, em vez de CDN. A tela abre igual numa máquina sem internet, o que importa na
+hora de gravar.
 
-Nos preços o símbolo é separado dos algarismos (`figure()` em `format.js`). Numa listagem ordenada
-por preço o que precisa alinhar é o algarismo; com o `R$` colado, cada linha começa numa posição
-diferente e a ordem crescente deixa de ser visível de relance.
+Nos preços, `figure()` em `format.js` separa o símbolo dos algarismos e a cifra tem largura fixa.
+Numa listagem ordenada por preço o que precisa alinhar é o algarismo; com o `R$` colado, cada linha
+começa numa posição diferente e a ordem crescente para de ser visível de relance.
 
 ## Decisões que valem explicação
 
@@ -133,8 +132,8 @@ web/
 - **Erros são legíveis**: o `ProblemDetails` das APIs é desempacotado — `detail` vira a mensagem, e
   `errors` por campo vira marcação no próprio input.
 - **Preços e ids com algarismos tabulares**, para as colunas alinharem.
-- **Ícones próprios em SVG**, 16 px na grade e traço de 1,6 — emoji sai diferente em cada sistema
-  operacional, e aqui a tela precisa ser a mesma em qualquer máquina.
+- **Ícones próprios em SVG**, 16 px na grade e traço de 1,6. Emoji sai diferente em cada sistema
+  operacional.
 - **Atalhos `1` / `2` / `3`** para as seções, desligados enquanto o foco está num campo ou diálogo.
 - `<dialog>` nativo nos modais, o que traz foco preso, backdrop e `Esc` sem JavaScript extra.
 - `prefers-reduced-motion` respeitado.

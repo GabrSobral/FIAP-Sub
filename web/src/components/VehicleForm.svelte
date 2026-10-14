@@ -4,13 +4,13 @@
   import { core, describe } from '../lib/api.js';
   import { toasts } from '../lib/toasts.svelte.js';
 
-  // `vehicle` absent means "register"; present means "edit that one".
+  // Sem `vehicle` é cadastro; com `vehicle` é edição daquele.
   let { vehicle = null, onclose, onsaved } = $props();
 
   const nextYear = new Date().getFullYear() + 1;
 
-  // Read once, on purpose: this is a form seeded from the vehicle, not a live mirror of it.
-  // A new vehicle means a new modal instance, so there is nothing to keep in sync.
+  // Lido uma vez de propósito: o formulário parte do veículo, não espelha ele.
+  // Outro veículo abre outro modal, então não há o que sincronizar.
   const initial = untrack(() => vehicle) ?? {};
 
   let brand = $state(initial.brand ?? '');

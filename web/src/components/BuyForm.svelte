@@ -41,7 +41,7 @@
       const sale = await sales.openSale({
         vehicleId: vehicle.vehicleId,
         cpf,
-        // datetime-local has no zone; send it as local time and let the server interpret it.
+        // datetime-local não tem fuso; manda como hora local e deixa o servidor interpretar.
         saleDate: saleDate ? new Date(saleDate).toISOString() : undefined,
       });
 
@@ -107,7 +107,6 @@
 </Modal>
 
 <style>
-  /* O que está sendo comprado fica no alto, destacado da entrada de dados. */
   .subject {
     display: flex;
     align-items: center;
@@ -116,7 +115,7 @@
     background: var(--sheet-2);
     border: 1px solid var(--rule);
     border-left: 2px solid var(--accent);
-    border-radius: var(--corner);
+    border-radius: var(--radius-sm);
   }
 
   .subject strong {

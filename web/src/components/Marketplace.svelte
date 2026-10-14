@@ -31,7 +31,6 @@
     }
   }
 
-  // Roda de novo sempre que a aba muda.
   $effect(() => {
     tab;
     load();
@@ -164,12 +163,10 @@
 {/if}
 
 <style>
-  /* Duas listagens, um controle: as abas ficam no cabeçalho da seção, não numa
-     barra própria, para não haver dois níveis de navegação na tela. */
   .switch {
     display: inline-flex;
     border: 1px solid var(--rule-strong);
-    border-radius: var(--corner);
+    border-radius: var(--radius-sm);
     overflow: hidden;
   }
 
@@ -200,8 +197,6 @@
     color: var(--accent-ink);
   }
 
-  /* Neutro em repouso, azul sob o cursor: a ação se anuncia na linha que o
-     olho já está lendo, sem três blocos saturados competindo com os preços. */
   .buy:hover:not(:disabled) {
     background: var(--accent);
     border-color: var(--accent);

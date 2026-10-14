@@ -17,8 +17,7 @@
     { key: 'sales', name: 'vendas', port: '8081' },
   ];
 
-  // A seção fica no hash: recarregar não volta para a primeira, e cada uma tem
-  // link próprio — #catalogue, #payments.
+  // #catalogue, #payments — recarregar não perde a seção.
   function fromHash() {
     const id = location.hash.slice(1);
 
@@ -49,7 +48,6 @@
     health = { core: coreState, sales: salesState };
   }
 
-  // Cada serviço responde pela própria prontidão, banco incluído.
   $effect(() => {
     probe();
 
@@ -58,7 +56,6 @@
     return () => clearInterval(timer);
   });
 
-  // 1, 2, 3 trocam de seção. Numa demonstração gravada vale não caçar o mouse.
   function onKey(event) {
     if (event.metaKey || event.ctrlKey || event.altKey) return;
 
@@ -79,7 +76,6 @@
 <div class="shell">
   <aside class="board">
     <div class="mark">
-      <!-- Uma placa, reduzida ao essencial: moldura, tarja e os caracteres. -->
       <svg viewBox="0 0 30 21" width="30" height="21" aria-hidden="true">
         <rect x="1" y="1" width="28" height="19" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.5" />
         <path d="M1.4 7h27.2" stroke="currentColor" stroke-width="1.5" />
@@ -168,7 +164,6 @@
     min-height: 100vh;
   }
 
-  /* O rail é um bloco de tinta, do jeito que a placa de um pátio é. */
   .board {
     position: sticky;
     top: 0;
@@ -217,7 +212,7 @@
     width: 100%;
     appearance: none;
     border: none;
-    border-radius: var(--corner);
+    border-radius: var(--radius-sm);
     background: none;
     color: var(--board-text-2);
     font: inherit;
@@ -246,7 +241,6 @@
   nav button.active {
     background: var(--board-2);
     color: var(--board-text);
-    /* Marca de seleção na borda interna, como um clipe segurando a ficha. */
     box-shadow: inset 2px 0 0 var(--board-accent);
   }
 
@@ -324,7 +318,7 @@
     background: var(--stop-wash);
     border: 1px solid color-mix(in srgb, var(--stop) 35%, transparent);
     border-left-width: 3px;
-    border-radius: var(--corner);
+    border-radius: var(--radius);
     color: var(--stop);
     font-size: 0.875rem;
   }

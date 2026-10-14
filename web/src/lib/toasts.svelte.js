@@ -23,7 +23,7 @@ export const toasts = {
   },
   success: (message) => push('success', message, 5000),
   info: (message) => push('info', message, 5000),
-  // Failures stay until dismissed: they usually need reading, and sometimes copying.
+  // Falha fica até ser fechada: quase sempre precisa ser lida, às vezes copiada.
   error: (message) => push('error', message),
   dismiss,
 };

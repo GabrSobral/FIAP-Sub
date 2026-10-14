@@ -292,7 +292,6 @@
     letter-spacing: -0.01em;
   }
 
-  /* Ficha de duas colunas: rótulo à esquerda, valor à direita, uma régua por linha. */
   .ficha {
     display: grid;
     grid-template-columns: 8.5rem minmax(0, 1fr);

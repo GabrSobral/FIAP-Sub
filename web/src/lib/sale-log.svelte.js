@@ -1,6 +1,6 @@
-// The sales API exposes a sale only by its id (GET /api/sales/{id}) — there is no "list sales"
-// endpoint, and adding one was out of scope for the brief. So this console remembers the
-// purchases it opened, in this browser, and re-reads each one from the API to show live state.
+// A API de vendas expõe uma venda só por id (GET /api/sales/{id}): não existe listagem,
+// e criar uma estava fora do escopo do enunciado. Então esta tela guarda as compras que ela
+// mesma abriu, neste navegador, e relê cada uma da API para mostrar o estado atual.
 const KEY = 'fiapsub.sales.v1';
 
 function read() {
@@ -19,7 +19,7 @@ function persist() {
   try {
     localStorage.setItem(KEY, JSON.stringify(entries));
   } catch {
-    // A full or blocked storage is not worth failing a purchase over.
+    // Storage cheio ou bloqueado não é motivo para derrubar uma compra.
   }
 }
 

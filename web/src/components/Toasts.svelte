@@ -38,7 +38,7 @@
     padding: 9px 6px 9px 13px;
     border: 1px solid var(--rule-strong);
     border-left-width: 3px;
-    border-radius: var(--corner);
+    border-radius: var(--radius);
     background: var(--sheet);
     box-shadow: var(--lift);
     font-size: 0.875rem;

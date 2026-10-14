@@ -1,6 +1,5 @@
 <script>
-  // Um conjunto pequeno e próprio: 16px na grade, traço de 1.6, sem preenchimento,
-  // sempre em currentColor. Emoji sairia diferente em cada sistema operacional.
+  // 16px na grade, traço 1.6, currentColor.
   const PATHS = {
     tag: 'M2.6 8.1 8.1 2.6a1.4 1.4 0 0 1 1-.4h3.5a.8.8 0 0 1 .8.8v3.5a1.4 1.4 0 0 1-.4 1l-5.5 5.5a1.4 1.4 0 0 1-2 0L2.6 10.1a1.4 1.4 0 0 1 0-2ZM10.6 5.4h.01',
     car: 'M2.4 9.6h11.2M4 9.6l1.3-3.7a1.5 1.5 0 0 1 1.4-1h2.6a1.5 1.5 0 0 1 1.4 1l1.3 3.7M2.4 9.6v2.2h11.2V9.6M6 11.8a1.1 1.1 0 1 1-2.2 0 1.1 1.1 0 0 1 2.2 0M12.4 11.8a1.1 1.1 0 1 1-2.2 0 1.1 1.1 0 0 1 2.2 0',
