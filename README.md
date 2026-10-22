@@ -105,7 +105,7 @@ dotnet test --solution core/FiapSub.Core.slnx --filter-not-trait "Category=Integ
 
 | Solução | Testes | Cobertura de linha |
 |---|---:|---:|
-| `core` | 172 | 99,8% |
+| `core` | 177 | 99,8% |
 | `sales` | 197 | 100% |
 
 O mínimo exigido é 80%, e o pipeline falha abaixo disso.
@@ -180,7 +180,7 @@ breaker), ou seja, é **at-least-once**. Por isso todo endpoint receptor é idem
 
 | Operação | O que a torna idempotente |
 |---|---|
-| Webhook de pagamento | índice único em `payment_notifications.payment_code`: o replay encontra a notificação já registrada e nada muda |
+| Webhook de pagamento | índice único em `payment_notifications.payment_code`: o replay de uma notificação aplicada encontra o registro e nada muda; uma que chegou antes da reserva (`404`) fica em aberto e o reenvio do provedor a aplica |
 | Reserva do veículo | reservar com o **mesmo** `paymentCode` é no-op no agregado |
 | Push da projeção | só aplica versão estritamente maior |
 | Resultado do pagamento | `MarkPaid`/`Cancel` são no-op quando a venda já está no estado final |
@@ -267,13 +267,20 @@ que é realmente excepcional.
   **falha abaixo de 80%** de cobertura de linha. O relatório HTML fica como artefato para download
   (é a evidência de cobertura pedida para o vídeo).
 - **`push` na `main`** (isto é, merge de um PR) → o mesmo gate, build da imagem, publicação no
-  **GHCR** e `kubectl apply` dos manifests, seguido de `kubectl set image` apontando para a imagem
-  daquele commit e `rollout status`.
+  **GHCR** e deploy no Kubernetes por `scripts/deploy.sh`: cria os secrets, aplica os manifests com
+  a imagem daquele commit, espera o `rollout status` e faz um smoke test pelo `Service`.
 
 O deploy é, portanto, **disparado por Pull Request com gatilho no merge na branch principal**, como
-o enunciado pede. O passo de `kubectl` é condicionado ao secret `KUBE_CONFIG` (kubeconfig em
-base64): sem cluster configurado ele é **pulado, não falha**, e o resumo do run diz isso
-explicitamente.
+o enunciado pede — e **sempre acontece de verdade**:
+
+- com o secret `KUBE_CONFIG` (kubeconfig em base64), vai para esse cluster;
+- sem ele, o job sobe um cluster **kind** efêmero no próprio runner, carrega a imagem recém-publicada
+  e faz o mesmo deploy e smoke test. Todo merge prova que os manifests sobem e o serviço responde.
+
+Secrets opcionais do repositório: `DB_PASSWORD` e `INTERNAL_TOKEN` (o **mesmo** valor nos dois
+repositórios; sem eles, são gerados no primeiro deploy e mantidos depois) e `REGISTRY_PULL_TOKEN`
+(PAT com `read:packages`, para um cluster externo puxar a imagem privada do GHCR — ou torne o pacote
+público).
 
 Para proteger a `main` no GitHub: *Settings → Branches → Add rule* exigindo PR e o check
 `Build and test` aprovado.
@@ -293,9 +300,23 @@ Para proteger a `main` no GitHub: *Settings → Branches → Add rule* exigindo 
 | `hpa.yaml` | autoscaler por CPU (2–10 réplicas) — é a resposta ao "aumento repentino de chamadas" |
 | `ingress.yaml` | expõe só as rotas públicas |
 
+O `secret.example.yaml` é só um modelo: os secrets reais são criados pelo `scripts/deploy.sh`.
+O mesmo script que o CI roda sobe a solução inteira num cluster local — foi assim que ela foi
+verificada, com o `scripts/e2e.sh` passando pelos `Service`s do Kubernetes:
+
 ```bash
-kubectl apply -f core/k8s/
-kubectl apply -f sales/k8s/
+kind create cluster --name fiap-sub
+docker build -t fiapsub-core:local core && docker build -t fiapsub-sales:local sales
+kind load docker-image fiapsub-core:local fiapsub-sales:local --name fiap-sub
+
+IMAGE=fiapsub-core:local  INTERNAL_TOKEN=demo core/scripts/deploy.sh
+IMAGE=fiapsub-sales:local INTERNAL_TOKEN=demo sales/scripts/deploy.sh
+
+kubectl -n fiap-sub port-forward svc/core-api  8080:8080 &
+kubectl -n fiap-sub port-forward svc/sales-api 8081:8080 &
+INTERNAL_TOKEN=demo ./scripts/e2e.sh
+
+kind delete cluster --name fiap-sub
 ```
 
 ---
@@ -367,12 +388,18 @@ git push git@github.com:<usuario>/fiap-sub-core.git core-only:main
 > em um clone descartável, ou simplesmente copiar a pasta para um repositório novo — o histórico
 > por si só não é entregável.
 
-**A única edição necessária depois do split**, em cada repositório:
+**A única edição necessária depois do split** é trazer o workflow, que mora na raiz do monorepo e
+por isso não entra no split. Em um clone do repositório novo (o exemplo é o `sales`; para o `core`,
+troque os nomes):
 
 ```bash
+git clone git@github.com:<usuario>/fiap-sub-sales.git && cd fiap-sub-sales
+git switch -c ci/pipeline
 mkdir -p .github/workflows
-git mv ../.github/workflows/sales.yml .github/workflows/ci-cd.yml   # ou core.yml
+cp <caminho-do-monorepo>/.github/workflows/sales.yml .github/workflows/ci-cd.yml
 sed -i 's/^  SERVICE_DIR: sales$/  SERVICE_DIR: ./' .github/workflows/ci-cd.yml
+git add .github && git commit -m "ci: pipeline de CI/CD do serviço"
+git push -u origin ci/pipeline     # abra o PR: ele já roda o gate de build, testes e cobertura
 ```
 
 Todos os outros caminhos do pipeline derivam de `SERVICE_DIR`, e os workflows não usam filtro
@@ -380,7 +407,7 @@ Todos os outros caminhos do pipeline derivam de `SERVICE_DIR`, e os workflows n�
 
 Isso foi verificado, não presumido: em cada repositório simulado a partir do split,
 `dotnet build -warnaserror`, `dotnet test` com cobertura, o gate de 80% e `docker build .`
-rodaram na raiz sem nenhum outro ajuste — 172 testes a 99,8% no `core` e 197 a 100% no `sales`.
+rodaram na raiz sem nenhum outro ajuste — 177 testes a 99,8% no `core` e 197 a 100% no `sales`.
 
 ---
 

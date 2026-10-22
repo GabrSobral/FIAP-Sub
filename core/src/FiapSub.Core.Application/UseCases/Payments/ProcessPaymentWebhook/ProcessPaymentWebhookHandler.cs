@@ -9,7 +9,8 @@ namespace FiapSub.Core.Application.UseCases.Payments.ProcessPaymentWebhook;
 /// <summary>
 /// Applies a payment notification to the vehicle it belongs to. The notification ledger makes
 /// this idempotent: the provider may call us more than once for the same payment, and only the
-/// first call moves the vehicle.
+/// first call that finds the vehicle moves it. A call that finds none is recorded but left open,
+/// so a retry that arrives after the reservation is committed still applies.
 /// </summary>
 public sealed class ProcessPaymentWebhookHandler(
     IPaymentNotificationRepository notifications,
@@ -24,21 +25,29 @@ public sealed class ProcessPaymentWebhookHandler(
         ArgumentNullException.ThrowIfNull(request);
 
         var paymentCode = PaymentCode.Create(request.PaymentCode);
-        var alreadyRecorded = await notifications.GetByPaymentCodeAsync(paymentCode, cancellationToken);
+        var notification = await notifications.GetByPaymentCodeAsync(paymentCode, cancellationToken);
 
-        if (alreadyRecorded is not null)
+        if (notification is { IsApplied: true })
         {
             return Result.Success(new PaymentWebhookResponse(
                 paymentCode.Value,
-                alreadyRecorded.Outcome.ToString(),
+                notification.Outcome.ToString(),
                 AlreadyProcessed: true,
-                alreadyRecorded.VehicleId,
+                notification.VehicleId,
                 VehicleStatus: null));
         }
 
         var now = clock.UtcNow;
-        var notification = PaymentNotification.Record(paymentCode, request.Outcome, now);
-        notifications.Add(notification);
+
+        if (notification is null)
+        {
+            notification = PaymentNotification.Record(paymentCode, request.Outcome, now);
+            notifications.Add(notification);
+        }
+        else
+        {
+            notification.Retry(request.Outcome);
+        }
 
         var vehicle = await vehicles.GetByReservationPaymentCodeAsync(paymentCode, cancellationToken);
 

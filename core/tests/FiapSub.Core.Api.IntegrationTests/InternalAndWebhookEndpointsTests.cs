@@ -198,6 +198,28 @@ public class InternalAndWebhookEndpointsTests(CoreApiFixture fixture)
     }
 
     [Fact]
+    public async Task Webhook_ThatArrivedBeforeTheReservation_IsAppliedOnRetry()
+    {
+        var vehicle = await fixture.Public.RegisterVehicleAsync(cancellationToken: Ct);
+        var paymentCode = ApiHelpers.NewPaymentCode();
+
+        using (var early = await NotifyPaymentAsync(paymentCode, "approved"))
+        {
+            early.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        }
+
+        await ReserveAsync(vehicle.Id, paymentCode);
+
+        using var retry = await NotifyPaymentAsync(paymentCode, "approved");
+        retry.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var body = (await retry.Content.ReadFromJsonAsync<PaymentWebhookResponse>(ApiHelpers.Json, Ct))!;
+
+        body.AlreadyProcessed.ShouldBeFalse();
+        body.VehicleStatus.ShouldBe(nameof(VehicleStatus.Sold));
+        (await fixture.Public.GetVehicleAsync(vehicle.Id, Ct)).Status.ShouldBe(nameof(VehicleStatus.Sold));
+    }
+
+    [Fact]
     public async Task Webhook_RejectsAnUnknownStatus()
     {
         using var response = await NotifyPaymentAsync(ApiHelpers.NewPaymentCode(), "half-paid");

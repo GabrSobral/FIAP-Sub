@@ -228,8 +228,8 @@ Tudo o que o serviço precisa está aqui: `global.json` (que fixa o SDK e liga o
 diretório vira a raiz do repositório e `dotnet build`, `dotnet test` e `docker build .` funcionam
 sem nenhum ajuste — isso é verificado, não presumido.
 
-A única edição necessária é no workflow: mova `.github/workflows/sales.yml` para
-`.github/workflows/ci-cd.yml` e troque `SERVICE_DIR: sales` por `SERVICE_DIR: .`. Todos os demais
+A única edição necessária é no workflow, que mora na raiz do monorepo e não entra no split:
+copie `.github/workflows/sales.yml` para `.github/workflows/ci-cd.yml` no repositório novo e troque `SERVICE_DIR: sales` por `SERVICE_DIR: .`. Todos os demais
 caminhos do pipeline derivam dessa variável.
 
 ## CI/CD
@@ -238,16 +238,23 @@ caminhos do pipeline derivam dessa variável.
 
 - **Pull request** → restore, build com `-warnaserror`, testes com cobertura e **falha abaixo de
   80%**; o relatório HTML fica como artefato para download.
-- **Merge na `main`** → o mesmo gate, build da imagem, push no GHCR,
-  `kubectl apply -f k8s/`, `kubectl set image` apontando para a imagem do commit e
-  `rollout status`. O passo de `kubectl` é condicionado ao secret `KUBE_CONFIG` e é **pulado**
-  (não falha) quando não há cluster configurado.
+- **Merge na `main`** → o mesmo gate, build da imagem, push no GHCR e deploy por
+  `scripts/deploy.sh`: cria os secrets, aplica `k8s/` com a imagem do commit, espera o
+  `rollout status` e faz um smoke test pelo `Service`. Com o secret `KUBE_CONFIG` o deploy vai para
+  esse cluster; sem ele, para um cluster **kind** efêmero no próprio runner — o deploy nunca é pulado.
 
 `k8s/` traz o conjunto completo de publicação: `Deployment` (2 réplicas, probes, não-root, root FS
 read-only), `Service` (`ClusterIP`), `HorizontalPodAutoscaler` de 2 a 10 réplicas por CPU — a
 resposta direta ao "aumento repentino de chamadas" —, `Ingress`, `ConfigMap`, modelo de `Secret` e
 o `StatefulSet` do banco próprio deste serviço.
 
+O `secret.example.yaml` é só um modelo; os secrets reais são criados pelo script, a partir de
+`DB_PASSWORD` e `INTERNAL_TOKEN` (ou gerados no primeiro deploy e mantidos depois). Para publicar
+no cluster para o qual o `kubectl` aponta — um `kind` local, por exemplo:
+
 ```bash
-kubectl apply -f k8s/
+docker build -t fiapsub-sales:local .
+kind load docker-image fiapsub-sales:local --name fiap-sub
+IMAGE=fiapsub-sales:local INTERNAL_TOKEN=demo ./scripts/deploy.sh
 ```
+

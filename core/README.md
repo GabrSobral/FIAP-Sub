@@ -45,7 +45,7 @@ o `Api` conhece a infraestrutura apenas no ponto de composição.
 | Agregado | Comportamento | Invariantes |
 |---|---|---|
 | `Vehicle` | `Register`, `UpdateDetails`, `Reserve`, `ConfirmSale`, `ReleaseReservation` | preço > 0; ano entre 1900 e o próximo; marca/modelo/cor não vazios; só um veículo `Available` é editável ou reservável; confirmar ou liberar exige o mesmo `paymentCode` da reserva |
-| `PaymentNotification` | `Record`, `MarkApplied`, `MarkUnapplied` | um registro por código de pagamento (índice único) — é isso que torna o webhook idempotente |
+| `PaymentNotification` | `Record`, `Retry`, `MarkApplied`, `MarkUnapplied` | um registro por código de pagamento (índice único) — é isso que torna o webhook idempotente; depois de aplicada é final, enquanto não encontra veículo aceita o reenvio do provedor |
 
 Value objects: `Money` (valor + moeda, no máximo 2 casas), `ModelYear`, `PaymentCode`.
 Eventos de domínio: `VehicleRegistered`, `VehicleDetailsUpdated`, `VehicleReserved`, `VehicleSold`,
@@ -139,7 +139,7 @@ reportgenerator -reports:"tests/**/TestResults/coverage.cobertura.xml" \
 cat coveragereport/Summary.txt
 ```
 
-**172 testes, 99,8% de cobertura de linha** (mínimo exigido: 80%; o pipeline falha abaixo disso).
+**177 testes, 99,8% de cobertura de linha** (mínimo exigido: 80%; o pipeline falha abaixo disso).
 
 Os testes de integração sobem um PostgreSQL real com Testcontainers e aplicam as migrations, então
 o Docker precisa estar em execução. Para pular essa parte:
@@ -185,8 +185,8 @@ Tudo o que o serviço precisa está aqui: `global.json` (que fixa o SDK e liga o
 diretório vira a raiz do repositório e `dotnet build`, `dotnet test` e `docker build .` funcionam
 sem nenhum ajuste — isso é verificado, não presumido.
 
-A única edição necessária é no workflow: mova `.github/workflows/core.yml` para
-`.github/workflows/ci-cd.yml` e troque `SERVICE_DIR: core` por `SERVICE_DIR: .`. Todos os demais
+A única edição necessária é no workflow, que mora na raiz do monorepo e não entra no split:
+copie `.github/workflows/core.yml` para `.github/workflows/ci-cd.yml` no repositório novo e troque `SERVICE_DIR: core` por `SERVICE_DIR: .`. Todos os demais
 caminhos do pipeline derivam dessa variável.
 
 ## CI/CD
@@ -195,15 +195,22 @@ caminhos do pipeline derivam dessa variável.
 
 - **Pull request** → restore, build com `-warnaserror`, testes com cobertura e **falha abaixo de
   80%**; o relatório HTML fica como artefato para download.
-- **Merge na `main`** → o mesmo gate, build da imagem, push no GHCR,
-  `kubectl apply -f k8s/`, `kubectl set image` apontando para a imagem do commit e
-  `rollout status`. O passo de `kubectl` é condicionado ao secret `KUBE_CONFIG` e é **pulado**
-  (não falha) quando não há cluster configurado.
+- **Merge na `main`** → o mesmo gate, build da imagem, push no GHCR e deploy por
+  `scripts/deploy.sh`: cria os secrets, aplica `k8s/` com a imagem do commit, espera o
+  `rollout status` e faz um smoke test pelo `Service`. Com o secret `KUBE_CONFIG` o deploy vai para
+  esse cluster; sem ele, para um cluster **kind** efêmero no próprio runner — o deploy nunca é pulado.
 
 `k8s/` traz o conjunto completo de publicação: `Deployment` (2 réplicas, probes, não-root, root FS
 read-only), `Service` (`ClusterIP`), `HorizontalPodAutoscaler`, `Ingress`, `ConfigMap`, modelo de
 `Secret` e o `StatefulSet` do banco próprio deste serviço.
 
+O `secret.example.yaml` é só um modelo; os secrets reais são criados pelo script, a partir de
+`DB_PASSWORD` e `INTERNAL_TOKEN` (ou gerados no primeiro deploy e mantidos depois). Para publicar
+no cluster para o qual o `kubectl` aponta — um `kind` local, por exemplo:
+
 ```bash
-kubectl apply -f k8s/
+docker build -t fiapsub-core:local .
+kind load docker-image fiapsub-core:local --name fiap-sub
+IMAGE=fiapsub-core:local INTERNAL_TOKEN=demo ./scripts/deploy.sh
 ```
+

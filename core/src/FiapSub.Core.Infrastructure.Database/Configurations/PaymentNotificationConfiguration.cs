@@ -38,6 +38,7 @@ public sealed class PaymentNotificationConfiguration : IEntityTypeConfiguration<
 
         builder.Ignore(n => n.DomainEvents);
         builder.Ignore(n => n.IsProcessed);
+        builder.Ignore(n => n.IsApplied);
 
         // This is what makes the webhook idempotent: a replayed notification cannot be inserted twice.
         builder.HasIndex(n => n.PaymentCode)

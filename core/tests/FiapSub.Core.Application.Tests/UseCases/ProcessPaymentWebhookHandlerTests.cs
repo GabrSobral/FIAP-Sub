@@ -110,6 +110,55 @@ public class ProcessPaymentWebhookHandlerTests
     }
 
     [Fact]
+    public async Task RetryOfAnUnappliedNotification_AppliesItOnceTheVehicleIsReserved()
+    {
+        var vehicle = VehicleFactory.Reserved(Payment);
+        var recorded = PaymentNotification.Record(Payment, PaymentOutcome.Cancelled, FixedClock.Default);
+        recorded.MarkUnapplied("No vehicle is reserved with this payment code.", FixedClock.Default);
+        _notifications.GetByPaymentCodeAsync(Arg.Any<PaymentCode>(), Arg.Any<CancellationToken>())
+            .Returns(recorded);
+        _vehicles.GetByReservationPaymentCodeAsync(Arg.Any<PaymentCode>(), Arg.Any<CancellationToken>())
+            .Returns(vehicle);
+
+        var result = await Handler().ExecuteAsync(
+            new ProcessPaymentWebhookCommand(Payment.Value, PaymentOutcome.Approved),
+            TestContext.Current.CancellationToken);
+
+        result.IsSuccess.ShouldBeTrue();
+        result.Value.AlreadyProcessed.ShouldBeFalse();
+        result.Value.VehicleStatus.ShouldBe(nameof(VehicleStatus.Sold));
+        vehicle.Status.ShouldBe(VehicleStatus.Sold);
+
+        recorded.Outcome.ShouldBe(PaymentOutcome.Approved);
+        recorded.VehicleId.ShouldBe(vehicle.Id);
+        recorded.FailureReason.ShouldBeNull();
+
+        _notifications.DidNotReceive().Add(Arg.Any<PaymentNotification>());
+        await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RetryThatStillFindsNoVehicle_IsReportedAsNotFoundAgain()
+    {
+        var recorded = PaymentNotification.Record(Payment, PaymentOutcome.Approved, FixedClock.Default);
+        recorded.MarkUnapplied("No vehicle is reserved with this payment code.", FixedClock.Default);
+        _notifications.GetByPaymentCodeAsync(Arg.Any<PaymentCode>(), Arg.Any<CancellationToken>())
+            .Returns(recorded);
+        _vehicles.GetByReservationPaymentCodeAsync(Arg.Any<PaymentCode>(), Arg.Any<CancellationToken>())
+            .Returns((Vehicle?)null);
+
+        var result = await Handler().ExecuteAsync(
+            new ProcessPaymentWebhookCommand(Payment.Value, PaymentOutcome.Approved),
+            TestContext.Current.CancellationToken);
+
+        result.IsFailure.ShouldBeTrue();
+        result.Error!.Code.ShouldBe(ErrorCodes.PaymentVehicleNotFound);
+        recorded.IsApplied.ShouldBeFalse();
+
+        _notifications.DidNotReceive().Add(Arg.Any<PaymentNotification>());
+    }
+
+    [Fact]
     public async Task BlankPaymentCode_IsRejectedByTheValueObject()
     {
         await Should.ThrowAsync<Domain.Exceptions.DomainValidationException>(() => Handler().ExecuteAsync(

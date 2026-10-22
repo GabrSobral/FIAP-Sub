@@ -1,6 +1,7 @@
 # CI/CD for the sales — listings and purchases service.
 #   pull_request  -> build, test, and refuse to go green below 80% line coverage
-#   push to main  -> the same gate, then publish the image and roll out the k8s manifests
+#   push to main  -> the same gate, then publish the image, roll out the k8s manifests and
+#                    smoke-test the deployment (on KUBE_CONFIG's cluster, or an ephemeral kind one)
 #
 # Deployment is therefore driven by pull requests: nothing reaches the cluster until a PR is
 # merged into main.
@@ -146,43 +147,61 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # The rollout is skipped — not failed — when no cluster is configured, so the pipeline is
-      # green on a fresh fork. Add a KUBE_CONFIG secret (base64 kubeconfig) to enable it.
-      - name: Check for a cluster
-        id: cluster
-        run: echo "configured=${{ secrets.KUBE_CONFIG != '' }}" >> "$GITHUB_OUTPUT"
+      # GHCR wants a lowercase owner; metadata-action lowercases the tags it pushes, so match it.
+      - name: Name the image this run pushed
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          echo "IMAGE=ghcr.io/${owner}/${IMAGE_NAME}:sha-${GITHUB_SHA}" >> "$GITHUB_ENV"
 
-      - name: Configure kubectl
-        if: steps.cluster.outputs.configured == 'true'
+      # A merge always ends in a real deployment. With a KUBE_CONFIG secret (base64 kubeconfig)
+      # it goes to that cluster; without one, to a throwaway kind cluster on the runner, so the
+      # manifests are still applied, rolled out and smoke-tested on every merge.
+      - name: Choose the cluster
+        id: cluster
+        run: echo "external=${{ secrets.KUBE_CONFIG != '' }}" >> "$GITHUB_OUTPUT"
+
+      - name: Configure kubectl for the external cluster
+        if: steps.cluster.outputs.external == 'true'
         run: |
           mkdir -p "$HOME/.kube"
           echo "${{ secrets.KUBE_CONFIG }}" | base64 --decode > "$HOME/.kube/config"
           chmod 600 "$HOME/.kube/config"
 
-      - name: Roll out the deployment and service
-        if: steps.cluster.outputs.configured == 'true'
+      - name: Create a kind cluster
+        if: steps.cluster.outputs.external != 'true'
+        uses: helm/kind-action@v1.12.0
+        with:
+          cluster_name: fiap-sub
+
+      # The GHCR package is private by default and kind has no credentials for it, so hand the
+      # cluster the image this run just pushed.
+      - name: Load the image into kind
+        if: steps.cluster.outputs.external != 'true'
+        run: |
+          docker pull "$IMAGE"
+          kind load docker-image "$IMAGE" --name fiap-sub
+
+      # Applies every manifest, creates the secrets, waits for the rollout and smoke-tests the
+      # Service. Secrets left unset are generated on the first deploy and kept afterwards.
+      # INTERNAL_TOKEN must hold the same value in both services' repositories.
+      - name: Deploy and smoke-test
         working-directory: ${{ env.SERVICE_DIR }}
+        env:
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          INTERNAL_TOKEN: ${{ secrets.INTERNAL_TOKEN }}
+          REGISTRY_PULL_TOKEN: ${{ secrets.REGISTRY_PULL_TOKEN }}
+          REGISTRY_USER: ${{ github.repository_owner }}
+        run: ./scripts/deploy.sh
+
+      - name: Report the deployment
         run: |
-          kubectl apply -f k8s/namespace.yaml
-          kubectl apply -f k8s/configmap.yaml
-          kubectl apply -f k8s/postgres.yaml
-          kubectl apply -f k8s/service.yaml
-          kubectl apply -f k8s/deployment.yaml
-          kubectl apply -f k8s/hpa.yaml
-          kubectl apply -f k8s/ingress.yaml
-
-          # Point the deployment at the image this run just pushed.
-          kubectl --namespace fiap-sub set image deployment/sales-api \
-            api=ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
-
-          kubectl --namespace fiap-sub rollout status deployment/sales-api --timeout=5m
-
-      - name: Report a skipped rollout
-        if: steps.cluster.outputs.configured != 'true'
-        run: |
+          if [[ "${{ steps.cluster.outputs.external }}" == "true" ]]; then
+            target="the cluster in \`KUBE_CONFIG\`"
+          else
+            target="an ephemeral kind cluster on the runner (add a \`KUBE_CONFIG\` secret to deploy to your own)"
+          fi
           {
-            echo "### Rollout skipped"
+            echo "### Deployment"
             echo
-            echo "The image was published to GHCR, but no \`KUBE_CONFIG\` secret is configured,"
-            echo "so \`kubectl apply -f k8s/\` did not run."
+            echo "Image \`${IMAGE}\` rolled out to ${target}."
           } >> "$GITHUB_STEP_SUMMARY"

@@ -1,12 +1,14 @@
 using FiapSub.Core.Domain.Abstractions;
+using FiapSub.Core.Domain.Exceptions;
 using FiapSub.Core.Domain.ValueObjects;
 
 namespace FiapSub.Core.Domain.Payments;
 
 /// <summary>
 /// The ledger of webhook calls received from the payment provider. One row per payment code,
-/// enforced by a unique index, which is what makes the webhook idempotent: a replay finds the
-/// notification already recorded and changes nothing.
+/// enforced by a unique index, which is what makes the webhook idempotent: a replay of an applied
+/// notification finds it already recorded and changes nothing. One that found no vehicle stays
+/// open, so the provider's retry can still apply it.
 /// </summary>
 public sealed class PaymentNotification : AggregateRoot<Guid>
 {
@@ -41,11 +43,28 @@ public sealed class PaymentNotification : AggregateRoot<Guid>
 
     public bool IsProcessed => ProcessedAt is not null;
 
+    /// <summary>True once a vehicle was moved by this notification; from then on it is final.</summary>
+    public bool IsApplied => VehicleId is not null;
+
     public static PaymentNotification Record(PaymentCode paymentCode, PaymentOutcome outcome, DateTimeOffset now)
     {
         ArgumentNullException.ThrowIfNull(paymentCode);
 
         return new PaymentNotification(Guid.CreateVersion7(), paymentCode, outcome, now);
+    }
+
+    /// <summary>
+    /// Takes a provider retry for a notification that found no vehicle — the reservation may not
+    /// have been committed yet. Nothing was applied, so the provider's latest outcome wins.
+    /// </summary>
+    public void Retry(PaymentOutcome outcome)
+    {
+        if (IsApplied)
+        {
+            throw new DomainStateException("This payment notification was already applied and is final.");
+        }
+
+        Outcome = outcome;
     }
 
     public void MarkApplied(Guid vehicleId, DateTimeOffset now)

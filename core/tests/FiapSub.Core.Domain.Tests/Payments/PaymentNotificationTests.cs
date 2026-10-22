@@ -22,6 +22,7 @@ public class PaymentNotificationTests
         notification.VehicleId.ShouldBeNull();
         notification.FailureReason.ShouldBeNull();
         notification.IsProcessed.ShouldBeFalse();
+        notification.IsApplied.ShouldBeFalse();
     }
 
     [Fact]
@@ -43,6 +44,7 @@ public class PaymentNotificationTests
         notification.ProcessedAt.ShouldBe(Now.AddSeconds(5));
         notification.FailureReason.ShouldBeNull();
         notification.IsProcessed.ShouldBeTrue();
+        notification.IsApplied.ShouldBeTrue();
     }
 
     [Fact]
@@ -55,7 +57,30 @@ public class PaymentNotificationTests
         notification.FailureReason.ShouldBe("no vehicle holds this payment code");
         notification.ProcessedAt.ShouldBe(Now);
         notification.IsProcessed.ShouldBeTrue();
+        notification.IsApplied.ShouldBeFalse();
         notification.VehicleId.ShouldBeNull();
+    }
+
+    [Fact]
+    public void Retry_OnAnUnappliedNotification_TakesTheLatestOutcome()
+    {
+        var notification = PaymentNotification.Record(Payment, PaymentOutcome.Approved, Now);
+        notification.MarkUnapplied("no vehicle holds this payment code", Now);
+
+        notification.Retry(PaymentOutcome.Cancelled);
+
+        notification.Outcome.ShouldBe(PaymentOutcome.Cancelled);
+        notification.ReceivedAt.ShouldBe(Now);
+    }
+
+    [Fact]
+    public void Retry_OnAnAppliedNotification_IsRefused()
+    {
+        var notification = PaymentNotification.Record(Payment, PaymentOutcome.Approved, Now);
+        notification.MarkApplied(Guid.CreateVersion7(), Now);
+
+        Should.Throw<DomainStateException>(() => notification.Retry(PaymentOutcome.Cancelled));
+        notification.Outcome.ShouldBe(PaymentOutcome.Approved);
     }
 
     [Theory]
