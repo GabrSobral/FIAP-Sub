@@ -123,12 +123,14 @@ Swagger em <http://localhost:8081/swagger>.
 Para rodar apenas este serviço, sem container:
 
 ```bash
-docker compose up -d sales-db core-api   # o banco deste serviço e o core, de quem ele depende
-dotnet run --project src/FiapSub.Sales.Api
+# o banco deste serviço e o core, de quem ele depende; o core precisa achar as vendas no host
+SALES_SERVICE_URL=http://host.docker.internal:8081 docker compose up -d sales-db core-api
+# 0.0.0.0, não localhost: o core, dentro do container, chega no host pela bridge do Docker
+dotnet run --project src/FiapSub.Sales.Api -- --urls http://0.0.0.0:8081
 ```
 
-O perfil `Development` já aponta para `localhost:5433` e usa `dev-internal-token` como segredo
-compartilhado. Em produção, `Database:ConnectionString`, `InternalApi:Token` e
+O perfil `Development` já aponta para `localhost:5433` e usa `local-dev-internal-token` (o mesmo
+do `docker-compose.yml`) como segredo compartilhado. Em produção, `Database:ConnectionString`, `InternalApi:Token` e
 `CatalogueService:InternalToken` vêm de variáveis de ambiente ou de um secret do Kubernetes — o
 `appsettings.json` versionado deixa os tokens **vazios de propósito**, e as rotas internas
 respondem `503` até que sejam configurados.
@@ -170,12 +172,13 @@ dotnet test --solution FiapSub.Sales.slnx
 Com cobertura, do mesmo jeito que o CI:
 
 ```bash
+rm -rf TestResults   # cada execução gera relatórios novos; comece limpo
 dotnet test --solution FiapSub.Sales.slnx \
   --coverage --coverage-settings coverage.runsettings \
-  --coverage-output-format cobertura --coverage-output coverage.cobertura.xml
+  --results-directory TestResults --coverage-output-format cobertura
 
 dotnet tool install --global dotnet-reportgenerator-globaltool
-reportgenerator -reports:"tests/**/TestResults/coverage.cobertura.xml" \
+reportgenerator -reports:"TestResults/*.cobertura.xml" \
   -targetdir:coveragereport -reporttypes:"Html;TextSummary"
 cat coveragereport/Summary.txt
 ```

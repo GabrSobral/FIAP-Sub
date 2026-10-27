@@ -32,9 +32,12 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       Database__ConnectionString: "Host=core-db;Port=5432;Database=fiapsub_core;Username=${POSTGRES_USER:-fiapsub};Password=${POSTGRES_PASSWORD:-fiapsub}"
       Database__RunMigrationsOnStartup: "true"
-      SalesService__BaseUrl: "http://sales-api:8080"
+      # Override with http://host.docker.internal:8081 when sales runs on the host via `dotnet run`.
+      SalesService__BaseUrl: ${SALES_SERVICE_URL:-http://sales-api:8080}
       SalesService__InternalToken: ${INTERNAL_TOKEN:-local-dev-internal-token}
       InternalApi__Token: ${INTERNAL_TOKEN:-local-dev-internal-token}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "8080:8080"
     depends_on:
