@@ -59,19 +59,24 @@ jobs:
 
       # The integration tests start a throwaway Postgres with Testcontainers; the ubuntu runner
       # already has a Docker daemon, so no extra service container is needed.
+      #
+      # Every test project writes into one explicit results directory, and with no
+      # --coverage-output each one gets its own unique file name. Where results land by default
+      # differs between SDK feature bands (10.0.1xx: each project's bin/; 10.0.4xx: a shared
+      # ./TestResults, where a fixed file name made the projects overwrite each other).
       - name: Test with coverage
         run: |
           dotnet test --solution "$SOLUTION_NAME" \
             --configuration Release --no-build \
+            --results-directory "$PWD/TestResults" \
             --coverage --coverage-settings coverage.runsettings \
-            --coverage-output-format cobertura \
-            --coverage-output coverage.cobertura.xml
+            --coverage-output-format cobertura
 
       - name: Build the coverage report
         run: |
           dotnet tool install --global dotnet-reportgenerator-globaltool
           reportgenerator \
-            -reports:"tests/**/TestResults/coverage.cobertura.xml" \
+            -reports:"TestResults/*.cobertura.xml" \
             -targetdir:coveragereport \
             -reporttypes:"Html;Cobertura;TextSummary;MarkdownSummaryGithub"
 
@@ -79,9 +84,17 @@ jobs:
       - name: Enforce the coverage threshold
         run: |
           python3 - <<'PYEOF'
+          import glob
           import os
           import sys
           import xml.etree.ElementTree as ET
+
+          # A gate over fewer reports than test projects would measure only part of the code.
+          projects = len(glob.glob("tests/*/*.csproj"))
+          reports = len(glob.glob("TestResults/*.cobertura.xml"))
+          print(f"Coverage reports: {reports} from {projects} test projects")
+          if reports < projects:
+              sys.exit(f"Coverage gate failed: expected {projects} coverage reports, found {reports}.")
 
           rate = float(ET.parse("coveragereport/Cobertura.xml").getroot().get("line-rate")) * 100
           minimum = float(os.environ["MIN_LINE_COVERAGE"])

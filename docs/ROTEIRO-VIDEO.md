@@ -95,6 +95,32 @@ ls core/k8s sales/k8s
 grep -h '^kind:' core/k8s/*.yaml | sort -u
 ```
 
+**Os mesmos manifests rodando num Kubernetes de verdade** — é exatamente o que o pipeline faz a
+cada merge. Prepare antes de gravar (leva ~2 min), em outro terminal, com o `docker compose` parado
+para liberar as portas 8080/8081:
+
+```bash
+kind create cluster --name fiap-sub
+docker build -t fiapsub-core:local core && docker build -t fiapsub-sales:local sales
+kind load docker-image fiapsub-core:local fiapsub-sales:local --name fiap-sub
+IMAGE=fiapsub-core:local  INTERNAL_TOKEN=demo core/scripts/deploy.sh
+IMAGE=fiapsub-sales:local INTERNAL_TOKEN=demo sales/scripts/deploy.sh
+```
+
+Na gravação, mostre o cluster e rode o ponta a ponta através dos `Service`s:
+
+```bash
+kubectl -n fiap-sub get statefulset,deployment,service,hpa,ingress,pods
+kubectl -n fiap-sub port-forward svc/core-api  8080:8080 &
+kubectl -n fiap-sub port-forward svc/sales-api 8081:8080 &
+INTERNAL_TOKEN=demo ./scripts/e2e.sh
+```
+
+> Fala: *"Cada serviço com o seu Deployment, Service, autoscaler e o seu próprio banco em um
+> StatefulSet. O mesmo script de deploy é o que o pipeline roda depois de cada merge."*
+
+Depois: `pkill -f 'kubectl -n fiap-sub port-forward'` e `kind delete cluster --name fiap-sub`.
+
 ---
 
 ## Bloco 2 — Os dois serviços, lado a lado (~1 min)
@@ -277,7 +303,7 @@ com **"All 15 steps passed."**
 cd core && dotnet test --solution FiapSub.Core.slnx
 ```
 
-Termine com **`total: 172 · falhou: 0`** na tela.
+Termine com **`total: 177 · falhou: 0`** na tela.
 
 ```bash
 cd ../sales && dotnet test --solution FiapSub.Sales.slnx
@@ -304,11 +330,12 @@ reportgenerator --version                                        # confirme
 ```bash
 cd ../core
 
+rm -rf TestResults   # cada execução gera relatórios novos; comece limpo
 dotnet test --solution FiapSub.Core.slnx \
   --coverage --coverage-settings coverage.runsettings \
-  --coverage-output-format cobertura --coverage-output coverage.cobertura.xml
+  --results-directory TestResults --coverage-output-format cobertura
 
-reportgenerator -reports:"tests/**/TestResults/coverage.cobertura.xml" \
+reportgenerator -reports:"TestResults/*.cobertura.xml" \
   -targetdir:coveragereport -reporttypes:"Html;TextSummary"
 
 cat coveragereport/Summary.txt | head -12
@@ -327,11 +354,12 @@ Repita no `sales` (**100%**):
 ```bash
 cd ../sales
 
+rm -rf TestResults   # cada execução gera relatórios novos; comece limpo
 dotnet test --solution FiapSub.Sales.slnx \
   --coverage --coverage-settings coverage.runsettings \
-  --coverage-output-format cobertura --coverage-output coverage.cobertura.xml
+  --results-directory TestResults --coverage-output-format cobertura
 
-reportgenerator -reports:"tests/**/TestResults/coverage.cobertura.xml" \
+reportgenerator -reports:"TestResults/*.cobertura.xml" \
   -targetdir:coveragereport -reporttypes:"Html;TextSummary"
 
 cat coveragereport/Summary.txt | head -12
@@ -351,13 +379,15 @@ grep -n 'MIN_LINE_COVERAGE\|Coverage gate failed\|refs/heads/main' .github/workf
 ```
 
 > Fala: *"Em pull request, roda build, testes e o gate de 80%. No merge na main, roda o mesmo gate,
-> publica a imagem no GHCR e aplica os manifests do Kubernetes com `kubectl apply`, seguido de
-> `rollout status`."*
+> publica a imagem no GHCR e faz o deploy no Kubernetes: aplica os manifests, espera o
+> `rollout status` e roda um smoke test. Sem cluster próprio configurado, o job sobe um cluster kind
+> no runner — o deploy nunca é pulado."*
 
 No GitHub, mostre:
 
 1. Um **Pull Request** com o check **Build and test** verde.
-2. A aba **Actions** do run do merge na `main`.
+2. A aba **Actions** do run do merge na `main`, com o job **Publish and deploy** verde e o resumo
+   *Deployment* dizendo em qual cluster a imagem foi publicada.
 3. O artefato **`<serviço>-coverage-report`** disponível para download no run — é a evidência de
    cobertura gerada pelo próprio pipeline.
 4. Em *Settings → Branches*, a regra que exige PR e o check aprovado na `main`.
@@ -378,6 +408,7 @@ No GitHub, mostre:
 - [ ] Pagamento cancelado devolvendo o veículo à vitrine
 - [ ] Logs mostrando a comunicação HTTP nos dois sentidos
 - [ ] Rotas internas recusando chamada sem token
-- [ ] `172` e `197` testes passando, na tela
+- [ ] `177` e `197` testes passando, na tela
 - [ ] Cobertura `99,8%` e `100%`, com o relatório HTML aberto
+- [ ] Os manifests rodando no kind: pods `Running` e o `e2e.sh` verde pelos `Service`s
 - [ ] Pipeline: PR verde, deploy no merge, artefato de cobertura

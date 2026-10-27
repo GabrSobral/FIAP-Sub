@@ -79,12 +79,13 @@ Com relatório de cobertura (o mesmo caminho que o CI executa):
 ```bash
 cd core        # ou: cd sales
 
+rm -rf TestResults   # cada execução gera relatórios novos; comece limpo
 dotnet test --solution FiapSub.Core.slnx \
   --coverage --coverage-settings coverage.runsettings \
-  --coverage-output-format cobertura --coverage-output coverage.cobertura.xml
+  --results-directory TestResults --coverage-output-format cobertura
 
 dotnet tool install --global dotnet-reportgenerator-globaltool
-reportgenerator -reports:"tests/**/TestResults/coverage.cobertura.xml" \
+reportgenerator -reports:"TestResults/*.cobertura.xml" \
   -targetdir:coveragereport -reporttypes:"Html;TextSummary"
 
 cat coveragereport/Summary.txt
